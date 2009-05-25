@@ -82,7 +82,7 @@ class Story(object):
 
         # Generate the table of contents
         if len(self.chapters) > 1 and not only_chapter:
-            toclist = E.UL()
+            toclist = E.OL()
             for chapter_num in sorted(self.chapters):
                 chapter = self.chapters[chapter_num]
                 toclist.append(E.LI(

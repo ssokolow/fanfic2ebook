@@ -119,9 +119,6 @@ class Scraper(object):
             chapter_title  = chapter_title_obj.group('name')
             chapter_number = int(chapter_title_obj.group('num'))
 
-            chapter_num_str   = "Chapter %d" % chapter_number
-            if not chapter_num_str.strip().lower() in chapter_title.strip().lower():
-                chapter_title = chapter_num_str + ': ' + chapter_title
             chapter = Chapter(chapter_number, chapter_title, chapter_content)
         else:
             chapter = Chapter(1, '', chapter_content)
