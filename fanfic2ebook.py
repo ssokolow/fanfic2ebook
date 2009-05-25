@@ -32,7 +32,7 @@ Features:
 __appname__ = "Fanfic Downloader for Pocket eBook Readers"
 __author__  = "Stephan Sokolow (deitarion/SSokolow)"
 __license__ = "GNU GPL 2.0 or later"
-__version__ = "0.0pre5"
+__version__ = "0.0pre6"
 
 # stdlib imports
 import os, subprocess, sys, urllib2
@@ -74,7 +74,7 @@ if __name__ == '__main__':
         default=[], help="Call the specified post-processor after each retrieval " +
                          "completes. Can be used multiple times. Implies --bundle.")
     pp_group.add_option('-e', '--final_ext', action="store", dest="final_ext", metavar="EXT",
-        default=None, help="Set the extension to be used in the output filename " +
+        default='.out', help="Set the extension to be used in the output filename " +
                            "available to post-processor templates.")
     parser.add_option_group(pp_group)
 
