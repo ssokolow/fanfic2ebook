@@ -53,7 +53,7 @@ if __name__ == '__main__':
     "and converting said archives into ready-to-read eBooks for pocket " +
     "reading devices.")
 
-    epilog = ("As an alternative to explicitly specifying postproc strings, " +
+    epilog = ("As an alternative to explicitly specifying a personality, " +
     "this command will alter its behaviour if called by the following names:" +
     " " + ', '.join(sorted(Personality.personalities)))
 
@@ -65,10 +65,9 @@ if __name__ == '__main__':
     parser.add_option('-t', '--target', action="store", dest="target", metavar="DIR",
         default=os.getcwd(), help="Specify a target directory other than the current working directory.")
     parser.add_option('--list_supported', action="store_true", dest="list_supported",
-        default=False, help="List sites supported by installed scrapers.")
-    parser.add_option('-P', '--personality', action="store", dest="personality", metavar="NAME",
-        default=None, help="Call the specified post-processor after each retrieval " +
-                         "completes. Can be used multiple times. Implies --bundle.")
+        default=False, help="List installed scrapers and personalities.")
+    parser.add_option('-P', '--personality', action="store", dest="persona", metavar="NAME",
+        default=None, help="Set the personality the conversion will operate under. See --list_supported.")
 
     pp_group = OptionGroup(parser, "Post-Processing Options")
     pp_group.add_option('-p', '--postproc', action="append", dest="postproc", metavar="CMD",
@@ -84,14 +83,16 @@ if __name__ == '__main__':
 
     if opts.list_supported:
         names = sorted(Scraper.scrapers[x].site_name for x in Scraper.scrapers)
-        print '\n'.join(names)
+        print "Scrapers:\n\t" + '\n\t'.join(names)
+        print
+        print "Personalities:\n\t" + '\n\t'.join(sorted(Personality.personalities))
         sys.exit()
 
     if not args:
         parser.print_help()
         sys.exit()
 
-    persona = Personality.get(opts.persona or cmd)
+    persona = Personality.get(opts.persona or cmd)()
     for option in persona.opts:
         setattr(opts, option, persona.opts[option])
 

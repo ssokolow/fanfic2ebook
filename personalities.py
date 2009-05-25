@@ -19,7 +19,7 @@ class Personality(object):
     and by alternatively-named symlinks."""
     personalities = {}              #: A class-level dict used by L{get}
     name          = 'fanfic2html'   #: The name by which the personality should be indexed.
-    opts          = None            #: A dict of changes to make to the opts
+    opts          = {}              #: A dict of changes to make to the opts
 
     def postproc(self, story):
         """L{Personality} subclasses override this to define post-processor behaviour."""
