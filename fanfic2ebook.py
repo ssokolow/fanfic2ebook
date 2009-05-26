@@ -23,6 +23,10 @@ Features:
    convert them to rough equivalents which can be displayed. (Common latin1
    accents like é and ï work but stuff like ō shows as whitespace) Make it default
    when the fanfic2lrf personality is active.
+    - Use code from http://stackoverflow.com/questions/517923/what-is-the-best-way-to-remove-accents-in-a-python-unicode-string
+    - Test with all accents I can find and provide a whitelist of ones supported by the PRS-505.
+ - fanfic2lrf doesn't do a page break of you go foo</p>bar, so I need to ensure all
+   text is in paragraph elements or equivalent.
  - Finish re-architecting this so it meets my non-drowsy standards.
    (eg. passing arbitrary flags to html2lrf)
 
