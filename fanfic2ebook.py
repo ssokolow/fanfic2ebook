@@ -18,6 +18,8 @@ Features:
     It's basically a generic downloader for serial web-published fiction.
 
 @todo:
+ - Support custom path generation and a config file so I can automatically
+   save to "~/Documents/Fanfiction/<series>/<story>/<story> - <chapter>.html"
  - I suspect it's not an encoding issue but a font issue that keeps certain
    accented characters from displaying in the Sony PRS-505. Offer an option to
    convert them to rough equivalents which can be displayed. (Common latin1
@@ -29,6 +31,8 @@ Features:
    text is in paragraph elements or equivalent.
  - Finish re-architecting this so it meets my non-drowsy standards.
    (eg. passing arbitrary flags to html2lrf)
+ - Test latest Calibré to see if the </p> and accent handling in html2lrf are fixed.
+   (If not, file a bug report and share the code I used to work around the problem)
 
 @newfield appname: Application Name
 """
@@ -72,6 +76,11 @@ if __name__ == '__main__':
         default=False, help="List installed scrapers and personalities.")
     parser.add_option('-P', '--personality', action="store", dest="persona", metavar="NAME",
         default=None, help="Set the personality the conversion will operate under. See --list_supported.")
+
+    #pre_group = OptionGroup(parser, "Pre-Processing Options")
+    #pre_group.add_option('--strip-accents', action="store_true", dest="strip_accents",
+    #    default=False, help="Remove diacritics for compatibility with readers with " +
+    #    "limited fonts and no internal fallback mechanism. (eg. Sony PRS-505)")
 
     pp_group = OptionGroup(parser, "Post-Processing Options")
     pp_group.add_option('-p', '--postproc', action="append", dest="postproc", metavar="CMD",
