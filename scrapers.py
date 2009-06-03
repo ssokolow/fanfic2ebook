@@ -298,7 +298,7 @@ class TtHScraper(Scraper):
     story_url_re          = re.compile(r"http://www.tthfanfic.org/Story-\d+(-\d+)?(/.*)?")
 
     chapter_select_xpath  = ".//select[@id='chapnav']"
-    chapter_content_xpath = ".//*[@class='storybody']"
+    chapter_content_xpath = ".//a[@name='storybody']/.."
     author_url_fragment   = '/AuthorStories-'
 
     def get_story_title(self, dom):
