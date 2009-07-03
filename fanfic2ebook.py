@@ -27,7 +27,7 @@ Features:
    when the fanfic2lrf personality is active.
     - Use code from http://stackoverflow.com/questions/517923/what-is-the-best-way-to-remove-accents-in-a-python-unicode-string
     - Test with all accents I can find and provide a whitelist of ones supported by the PRS-505.
- - fanfic2lrf doesn't do a page break of you go foo</p>bar, so I need to ensure all
+ - fanfic2lrf doesn't do a page break if you go foo</p>bar, so I need to ensure all
    text is in paragraph elements or equivalent.
  - Finish re-architecting this so it meets my non-drowsy standards.
    (eg. passing arbitrary flags to html2lrf)
@@ -40,10 +40,10 @@ Features:
 __appname__ = "Fanfic Downloader for Pocket eBook Readers"
 __author__  = "Stephan Sokolow (deitarion/SSokolow)"
 __license__ = "GNU GPL 2.0 or later"
-__version__ = "0.0pre6"
+__version__ = "0.1pre1"
 
 # stdlib imports
-import os, subprocess, sys, urllib2
+import os, subprocess, urllib2
 
 # Local imports
 from personalities import Personality
@@ -99,11 +99,11 @@ if __name__ == '__main__':
         print "Scrapers:\n\t" + '\n\t'.join(names)
         print
         print "Personalities:\n\t" + '\n\t'.join(sorted(Personality.personalities))
-        sys.exit()
+        parser.exit()
 
     if not args:
         parser.print_help()
-        sys.exit()
+        parser.exit()
 
     persona = Personality.get(opts.persona or cmd)()
     for option in persona.opts:
