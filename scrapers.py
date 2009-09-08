@@ -277,7 +277,7 @@ class FFNetScraper(Scraper):
     chapter_select_xpath  = ".//*[@name='chapter']"
     chapter_content_xpath = ".//*[@class='storytext']"
     author_url_fragment   = '/u/'
-    story_title_re        = re.compile(r"^(?P<title>.+?), an? (?P<category>.+?)( crossover)? fanfic" +
+    story_title_re        = re.compile(r"^(?P<title>.+?) Chapter (?P<chapter>\d+?), an? (?P<category>.+?)( crossover)? fanfic" +
         " - FanFiction.Net$", re.IGNORECASE ) #: Used to extract the story's title and fandom from <title>
 
     def resolve_chapter_url(self, instr, base_url, dom):

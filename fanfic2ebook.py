@@ -18,6 +18,7 @@ Features:
     It's basically a generic downloader for serial web-published fiction.
 
 @todo:
+ - Support transparently resuming from gzip/bzip2-compressed save sets.
  - Support custom path generation and a config file so I can automatically
    save to "~/Documents/Fanfiction/<series>/<story>/<story> - <chapter>.html"
  - I suspect it's not an encoding issue but a font issue that keeps certain
