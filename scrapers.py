@@ -27,6 +27,15 @@ from lxml import html
 # local imports
 from data_structures import Story, Chapter
 
+# -- Hopefully temporary hack to ensure safe stdout output --
+import locale, sys
+pref_enc = sys.stdout.encoding or locale.getpreferredencoding() or 'utf8'
+def prnt(unistr):
+    if isinstance(unistr, unicode):
+        unistr = unistr.encode(pref_enc, 'ignore')
+    print unistr
+# --
+
 class Scraper(object):
     """The base class for fanfiction-to-ebook scrapers."""
     scrapers               = {} #: Scrapers registered to be called by L{get}
@@ -78,7 +87,7 @@ class Scraper(object):
         """
         # Verify the URL's syntactical validity before wasting bandwidth.
         if not self.story_url_re.match(url):
-            print "Not a %s story URL: %s" % (self.site_name, url)
+            prnt("Not a %s story URL: %s" % (self.site_name, url))
             return None
 
         # Retrieve the raw chapter (don't keep the un-parsed HTML wasting memory)
@@ -154,7 +163,7 @@ class Scraper(object):
                 chap_tmp = Chapter.from_html(target)
                 chap_tmp.path = target
                 story.add_chapters(chap_tmp)
-                print "Chapter already exists. Skipping: %s" % target
+                prnt("Chapter already exists. Skipping: %s" % target)
                 continue
 
             if not pos + 1 in story.chapters:
@@ -162,7 +171,7 @@ class Scraper(object):
                 chap_tmp.path = target
                 story.add_chapters(chap_tmp)
 
-            print "Writing %s" % target
+            prnt("Writing %s" % target)
             story.write(target, pos + 1)
 
         if self.bundle:
@@ -171,7 +180,7 @@ class Scraper(object):
             story.final_path = os.path.join(fic_target,
                 '%s.%s' % (self.prepare_filename(story.title), self.final_ext.lstrip('.')))
 
-            print "Generating single-file bundle: %s" % story.path
+            prnt("Generating single-file bundle: %s" % story.path)
             story.write(story.path)
 
         return story
@@ -218,7 +227,7 @@ class Scraper(object):
                 raise IOError(errno.EACCES, "%s (%s)" % (errno.errorcode[errno.EACCES],
                     "Target directory does not exist and cannot be created."), parent)
             elif create:
-                print "Target directory does not exist. Creating: %s" % target
+                prnt("Target directory does not exist. Creating: %s" % target)
                 os.makedirs(target)
             else:
                 return False
