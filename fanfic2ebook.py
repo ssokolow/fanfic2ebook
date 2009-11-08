@@ -41,19 +41,18 @@ Features:
 __appname__ = "Fanfic Downloader for Pocket eBook Readers"
 __author__  = "Stephan Sokolow (deitarion/SSokolow)"
 __license__ = "GNU GPL 2.0 or later"
-__version__ = "0.1pre1"
+__version__ = "0.1pre2"
+__siteurl__ = "http://github.com/ssokolow/fanfic2ebook/tree/master"
 
 # stdlib imports
-import os, subprocess, urllib2
+import os, subprocess
 
 # Local imports
 from personalities import Personality
-from scrapers import Scraper
+from scrapers import Scraper, HTTP
 
 # Set the User-Agent string
-_opener = urllib2.build_opener()
-_opener.addheaders = [('User-agent', '%s/%s' % (__appname__, __version__))]
-urllib2.install_opener(_opener)
+HTTP.set_base_UA('%s/%s +%s' % (__appname__, __version__, __siteurl__))
 
 if __name__ == '__main__':
     from optparse import OptionParser, OptionGroup

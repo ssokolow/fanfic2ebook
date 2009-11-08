@@ -9,9 +9,7 @@
    associated with the URL fed to it.
  - Write a Scraper subclass for MediaMiner.
  - Make this code more robust (it makes many assumptions about cached data and input)
- - Support If-Modified-Since and ETag to further conserve bandwidth.
- - Add +http://www.ssokolow.com/scripts/ to the User-Agent string as soon as
-   I'm ready to share this.
+ - Consider adding ETags and If-Modified-Since support to the urllib2 fallback.
 """
 
 __appname__ = "Fanfic Downloader for Pocket eBook Readers"
@@ -19,7 +17,7 @@ __author__  = "Stephan Sokolow (deitarion/SSokolow)"
 __license__ = "GNU GPL 2.0 or later"
 
 # stdlib imports
-import errno, os, re, urllib2, urlparse
+import errno, os, re, urlparse
 
 # lxml imports
 from lxml import html
@@ -35,6 +33,52 @@ def prnt(unistr):
         unistr = unistr.encode(pref_enc, 'ignore')
     print unistr
 # --
+
+class HTTP(object):
+    """Simple wrapper which tries to use httplib2 for chapter retrieval
+    and falls back to urllib2.
+    """
+    #base_UA = "%s/%s" % (__appname__, "Unknown")
+    shortname = 'fanfic2ebook'
+
+    @classmethod
+    def set_base_UA(cls, UA_string):
+        cls.base_UA = UA_string
+
+    @classmethod
+    def get_cache_dir(cls):
+        """Retrieve a cache directory appropriate for the current platform."""
+        # Portable cache directory placement
+        if os.name == 'nt':
+            from winpaths import get_local_appdata
+            croot = get_local_appdata()
+        else:
+            croot = os.environ.get("XDG_CACHE_HOME", os.path.expanduser("~/.cache"))
+        return os.path.join(croot, cls.shortname, 'http_cache')
+
+    def __init__(self):
+        try:
+            import httplib2
+            self.cachedir = self.get_cache_dir()
+            self.http = httplib2.Http(self.cachedir)
+            self.full_UA = "%s (httplib2 present. HTTP Cache enabled.)" % self.base_UA
+            self.with_httplib2 = True
+        except ImportError:
+            import urllib2
+            self.full_UA = "%s (httplib2 absent. Local cache only.)" % self.base_UA
+            self.opener = urllib2.build_opener()
+            self.opener.addheaders = [('User-agent', self.full_UA)]
+            urllib2.install_opener(self.opener)
+            self.with_httplib2 = False
+
+    def get_dom(self, url):
+        if self.with_httplib2:
+            resp, content = self.http.request(url, "GET",
+                    headers={"User-agent": self.full_UA})
+            dom = html.fromstring(content, base_url=url)
+        else:
+            dom = html.parse(self.opener.open(url)).getroot()
+        return dom
 
 class Scraper(object):
     """The base class for fanfiction-to-ebook scrapers."""
@@ -72,6 +116,7 @@ class Scraper(object):
         self.final_ext  = final_ext
         self.target_dir = os.path.abspath(target or os.getcwd())
         self.verify_target_dir()
+        self.http = HTTP()
 
     def acquire_chapter(self, url, story=None):
         """Download and scrape a single chapter from a story.
@@ -93,7 +138,7 @@ class Scraper(object):
         # Retrieve the raw chapter (don't keep the un-parsed HTML wasting memory)
         # .parse(handle) for proper encoding detection.
         # .urlopen for customizing the User-Agent header.
-        dom = html.parse(urllib2.urlopen(url)).getroot()
+        dom = self.http.get_dom(url)
         html.make_links_absolute(dom, copy=False)
 
         chapter_select  = dom.find(self.chapter_select_xpath)
