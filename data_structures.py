@@ -19,11 +19,40 @@ content_cleaner = Cleaner(scripts=True, javascript=True, comments=True,
 
 class Story(object):
     """The in-memory representation of a story."""
-    title    = None
-    author   = None
-    chapters = None
-    category = ''
-    cover    = ''
+    title      = None
+    author     = None #XXX: Should I just trust sites to specify a primary author or plan for co-authorship?
+    author_url = None #: @todo: Implement
+    chapters   = None
+    category   = ''
+    cover      = ''
+    language   = None #: @todo: Implement (http://www.ietf.org/rfc/rfc3066.txt and http://xml.coverpages.org/iso639a.html)
+    published  = None #: @todo: Implement
+    publisher  = None #: @todo: Implement (Name of the fic-hosting site from which it was retrieved)
+    story_url  = None #: @todo: Implement
+    summary    = ''   #: @todo: Implement
+    updated    = None #: @todo: Implement (What about at the chapter level? Story updated value as of initial retrieval in an incremental save?)
+
+    meta_mappings = {
+            'Author' : 'author',
+            'DC.title' : 'title', #TODO: What about chapter title vs. story title? ...and what about speccing <title> more formally?
+            'DC.creator' : 'author',
+            'DC.date.created' : 'published',
+            'DC.date.modified' : 'updated',
+            'DC.description' : 'summary',
+            'DC.language' : 'language',
+            'DC.publisher' : 'publisher',
+            'Description' : 'summary',
+            'Language' : 'language', #TODO:
+            'Identifier-URL' : 'story_url',
+            #TODO: Rating, Charset
+    } #: @todo: Implement
+
+    meta_fixed = {
+            'Category' : 'Fanfiction',
+            'DC.type' : 'Text',
+            'Generator' : 'fanfic2ebook', #TODO: Use the User Agent string here
+            #TODO: Include a schema versioning meta element.
+    } #: @todo: Implement
 
     def __init__(self, title, author, chapters=None):
         """
@@ -141,9 +170,15 @@ class Story(object):
 
 class Chapter(object):
     """The in-memory representation of a chapter"""
-    number  = None
-    title   = None
-    content = None
+    number      = None
+    title       = None
+    content     = None
+    chapter_url = None #TODO: Implement
+
+    #XXX: Duplicate story metainfo here to make chapter data more reliably complete?
+    meta_mappings = {
+            'DC.identifier' : 'chapter_url',
+    } #: @todo: Implement
 
     def __init__(self, number, title, content):
         """
