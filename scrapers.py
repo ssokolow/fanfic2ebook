@@ -10,6 +10,7 @@
  - Write a Scraper subclass for MediaMiner.
  - Make this code more robust (it makes many assumptions about cached data and input)
  - Consider adding ETags and If-Modified-Since support to the urllib2 fallback.
+ - Check out the sites listed at http://www.ficsavers.com/index.cgi?action=list
 """
 
 __appname__ = "Fanfic Downloader for Pocket eBook Readers"
@@ -349,7 +350,7 @@ Scraper.register(FFNetScraper)
 class TtHScraper(Scraper):
     """A fanfic-to-ebook scraper for Twisting the Hellmouth"""
     site_name             = "Twisting the Hellmouth"
-    story_url_re          = re.compile(r"http://www.tthfanfic.org/Story-\d+(-\d+)?(/.*)?")
+    story_url_re          = re.compile(r"http://www.tthfanfic.org/(Story-\d+(-\d+)?(/.*)?|story.php\?no=\d+)")
 
     chapter_select_xpath  = ".//select[@id='chapnav']"
     chapter_content_xpath = ".//a[@name='storybody']/.."
@@ -361,7 +362,9 @@ class TtHScraper(Scraper):
     def custom_content_cleaning(self, content):
         """Remove the site's chapter heading since we're adding our own."""
         elem_h3 = content.find('.//h3')
-        elem_h3.getparent().remove(elem_h3)
+        if elem_h3 is not None:
+            # elem_h3 isn't present on oneshots
+            elem_h3.getparent().remove(elem_h3)
 Scraper.register(TtHScraper)
 
 class FicWadScraper(Scraper):

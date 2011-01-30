@@ -60,7 +60,7 @@ class BBeBPersonality(Personality):
 
     def postproc(self, story):
         """Perform the transformation from HTML to LRF."""
-        cmdline = ['html2lrf', '-t', story.title, '-a', story.author,
+        cmdline = ['ebook-convert', '-t', story.title, '-a', story.author,
             '-o', story.final_path, '--publisher', story.site_name]
 
         if story.category:
@@ -86,7 +86,7 @@ class EPubPersonality(Personality):
 
     def postproc(self, story):
         """Perform the transformation from HTML to LRF."""
-        cmdline = ['html2epub', '-t', story.title, '-a', story.author,
+        cmdline = ['ebook-convert', '-t', story.title, '-a', story.author,
             '-o', story.final_path, '--publisher', story.site_name]
 
         if story.category:
@@ -111,9 +111,9 @@ class OEBPersonality(Personality):
     opts  = {'bundle' : True, 'final_ext' : '.oeb'}
 
     def postproc(self, story):
-        """Perform the transformation from HTML to LRF."""
+        """Perform the transformation from HTML to OEB."""
         story.oeb_path = os.path.splitext(story.final_path)[0] + '.opf'
-        cmdline = ['html2oeb', '--zip', '-t', story.title, '-a', story.author,
+        cmdline = ['ebook-convert', '--zip', '-t', story.title, '-a', story.author,
             '-o', story.oeb_path, '--publisher', story.site_name]
 
         if story.category:
