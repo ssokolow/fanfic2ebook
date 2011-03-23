@@ -15,8 +15,7 @@ Usage
 
 Basic usage:
 
-::
-    fanfic2ebook http://www.fanfiction.net/s/2830860/1/ http://www.fanfiction.net/s/1744410/1/
+``fanfic2ebook http://www.fanfiction.net/s/2830860/1/ http://www.fanfiction.net/s/1744410/1/``
 
 See the output of ``--help`` for usage instructions.
 
