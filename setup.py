@@ -26,6 +26,11 @@ setup(name='fanfic2ebook',
       {
          'bundle_files': 1,
          'compressed': True,
+			'excludes': [
+				'calendar', 'difflib', 'email', 'ftplib', 
+				'pdb', 'pyreadline', 'select', 'ssl', '_ssl',
+				'unittest', 'uu', 'webbrowser'
+			],
          'includes': ['lxml.etree', 'lxml._elementpath', 'gzip'],
          'optimize': 2,
       }
