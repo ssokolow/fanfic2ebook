@@ -119,6 +119,7 @@ if __name__ == '__main__':
         except Exception, err:
             print "Failed to retrieve story %s" % url_arg
             print "TODO: Handle this properly"
+            continue
 
         persona.postproc(downloaded_story)
 
