@@ -15,7 +15,7 @@ Usage
 
 Basic usage:
 
-``fanfic2ebook http://www.fanfiction.net/s/2830860/1/ http://www.fanfiction.net/s/1744410/1/``
+``fanfic2html http://www.fanfiction.net/s/2830860/1/ http://www.fanfiction.net/s/1744410/1/``
 
 See the output of ``--help`` for usage instructions.
 
@@ -45,7 +45,7 @@ this project.
 When reporting problems, please provide the following information:
 
 - The exact command line which gave you issues
-- What version of fanfic2ebook you are using (For .exe bundles, run ``fanfic2ebook --version``)
+- What version of fanfic2ebook you are using (For .exe bundles, run ``fanfic2html --version``)
 - What operating system you are running it on
 - If running a source build, the versions of Python, LXML, and httplib2 you are
   using.
