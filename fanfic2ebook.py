@@ -114,7 +114,11 @@ if __name__ == '__main__':
 
     for url_arg in args:
         scraper = Scraper.get(url_arg)(opts.target, opts.bundle, opts.final_ext)
-        downloaded_story = scraper.download_fic(url_arg)
+        try:
+            downloaded_story = scraper.download_fic(url_arg)
+        except Exception, err:
+            print "Failed to retrieve story %s" % url_arg
+            print "TODO: Handle this properly"
 
         persona.postproc(downloaded_story)
 
