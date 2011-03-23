@@ -54,7 +54,7 @@ from scrapers import Scraper, HTTP
 # Set the User-Agent string
 HTTP.set_base_UA('%s/%s +%s' % (__appname__, __version__, __siteurl__))
 
-if __name__ == '__main__':
+def main():
     from optparse import OptionParser, OptionGroup
 
     descr  = ("A simple tool for archiving fanfiction for offline reading " +
@@ -139,3 +139,6 @@ if __name__ == '__main__':
                 cmdlist = pp_cmdline.strip().split()
                 print "Calling post-processor: %s" % cmdlist[0]
                 subprocess.call([r % inputs for r in cmdlist])
+
+if __name__ == '__main__':
+	main()

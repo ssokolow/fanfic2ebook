@@ -1,23 +1,24 @@
-import os, sys
-if os.name != 'nt':
-	print "TODO: Extend setup.py to do more than py2exe bundle-building."
-	print "You may run fanfic2ebook manually from its installation directory."
-	sys.exit(1)
-
+import os
 from distutils.core import setup
-import py2exe
 
-sys.argv.append('py2exe')
+try:
+	import py2exe
+except ImportError:
+	pass
 
 setup(
-	console=['fanfic2ebook.py'],
+	scripts=['src/fanfic2html', 'src/fanfic2lrf'],
+	console=['src/fanfic2html'],
 	options={
 		'py2exe': 
 		{
 			'bundle_files': 1,
+			'compressed': True,
 			'includes': ['lxml.etree', 'lxml._elementpath', 'gzip'],
 			'optimize': 2,
 		}
 	},
+	packages = ['fanfic2ebook'],
+	package_dir = {'': 'src'},
 	zipfile = None
 )

@@ -1,0 +1,4 @@
+#!/usr/bin/env python
+
+import fanfic2ebook
+fanfic2ebook.main()
