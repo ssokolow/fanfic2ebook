@@ -28,6 +28,7 @@ rd build /s /q
 
 :: Recompress content with 7-Zip's Deflate engine
 echo.
+echo "TODO: Is it possible to UPX-pack DLL/PYDs in the bundle before recompressing with 7-zip?"
 echo "TODO: Recompress content with 7-zip."
 echo.
 ::%SevenZipEXE% -aoa x "%~dpn0_EXE\library.zip" -o"%~dpn0_EXE\library\"

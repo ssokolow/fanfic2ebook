@@ -1,4 +1,9 @@
 #!/usr/bin/env python
+"""
+@todo: Design an icon to be bundled: http://www.py2exe.org/index.cgi/CustomIcons
+@todo: Test against Python 3 and add "Programming Language :: Python :: 3" to the classifiers
+@todo: Decide on a version scheme py2exe is OK with (http://docs.python.org/distutils/setupscript.html#additional-meta-data)
+"""
 import sys
 from distutils.core import setup
 
@@ -15,7 +20,18 @@ setup(name='fanfic2ebook',
     description="Fanfiction downloader/cleaner for offline reading",
     author='Stephan Sokolow',
     url='https://github.com/ssokolow/fanfic2ebook',
-
+    classifiers = [
+        "Programming Language :: Python",
+        "License :: OSI Approved :: GNU General Public License (GPL)",
+        "Operating System :: OS Independent",
+        #TODO: Figure out other peoples' understanding of "Development Status"
+        "Environment :: Console",
+        "Intended Audience :: End Users/Desktop",
+        "Topic :: Internet :: WWW/HTTP",
+        "Topic :: System :: Archiving",
+        "Topic :: Text Processing :: Filters",
+        "Topic :: Text Processing :: Markup :: HTML"
+    ],
 
     scripts=['src/fanfic2html', 'src/fanfic2lrf'],
     packages = ['fanfic2ebook'],
