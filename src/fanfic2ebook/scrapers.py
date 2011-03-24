@@ -61,7 +61,7 @@ class HTTP(object):
         try:
             import httplib2
             self.cachedir = self.get_cache_dir()
-            self.http = httplib2.Http(self.cachedir)
+            self.http = httplib2.Http(httplib2.FileCache(self.cachedir))
             self.full_UA = "%s (httplib2 present. HTTP Cache enabled.)" % self.base_UA
             self.with_httplib2 = True
         except ImportError:
