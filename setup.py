@@ -16,24 +16,25 @@ setup(name='fanfic2ebook',
     author='Stephan Sokolow',
     url='https://github.com/ssokolow/fanfic2ebook',
 
-   scripts=['src/fanfic2html', 'src/fanfic2lrf'],
-   packages = ['fanfic2ebook'],
-   package_dir = {'': 'src'},
 
-   console=['src/fanfic2html'],
-   options={
-      'py2exe':
-      {
-         'bundle_files': 1,
-         'compressed': True,
-			'excludes': [
-				'calendar', 'difflib', 'email', 'ftplib', 
-				'pdb', 'pyreadline', 'select', 'ssl', '_ssl',
-				'unittest', 'uu', 'webbrowser'
-			],
-         'includes': ['lxml.etree', 'lxml._elementpath', 'gzip'],
-         'optimize': 2,
-      }
-   },
-   zipfile = None
+    scripts=['src/fanfic2html', 'src/fanfic2lrf'],
+    packages = ['fanfic2ebook'],
+    package_dir = {'': 'src'},
+
+    console=['src/fanfic2html'],
+    options={
+        'py2exe':
+        {
+            'bundle_files': 1,
+            'compressed': True,
+            'excludes': [
+                'calendar', 'difflib', 'email', 'ftplib',
+                'pdb', 'pyreadline', 'select', 'ssl', '_ssl',
+                'unittest', 'uu', 'webbrowser'
+            ],
+            'includes': ['lxml.etree', 'lxml._elementpath', 'gzip'],
+            'optimize': 2,
+        }
+    },
+    zipfile = None
 )

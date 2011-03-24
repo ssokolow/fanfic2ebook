@@ -8,7 +8,7 @@ setlocal
 
 :: Set paths to required commands
 ::TODO: Figure out how to look these up at runtime.
-set 7ZipEXE=C:\Fools\advancecomp\advzip.exe
+set SevenZipEXE="C:\Program Files\7-Zip\7z.exe"
 set UpxEXE=C:\Tools\upx\upx.exe
 
 :: Optimize ALL included code without hard-coding a path to Python.
@@ -23,7 +23,7 @@ if not "%errorlevel%"=="0" (
         goto:eof
 )
 
-:: Clean out Py2EXE-Results
+:: Clean out Py2EXE intermediate products
 rd build /s /q
 
 :: Recompress content with 7-Zip's Deflate engine
@@ -38,9 +38,9 @@ echo.
 ::cd..
 ::rd "%~dpn0_EXE\library" /s /q
 
-:: Compress stub with UPX
+:: Compress runtime with UPX
 echo.
-echo "Compressing stub with UPX..."
+echo "Compressing runtime with UPX..."
 echo.
 cd dist\
 %UpxEXE% --best *.*
