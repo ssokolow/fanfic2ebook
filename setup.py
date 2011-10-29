@@ -20,6 +20,7 @@ setup(name='fanfic2ebook',
     description="Fanfiction downloader/cleaner for offline reading",
     author='Stephan Sokolow',
     url='https://github.com/ssokolow/fanfic2ebook',
+    license="License :: OSI Approved :: GNU General Public License (GPL)",
     classifiers = [
         "Programming Language :: Python",
         "License :: OSI Approved :: GNU General Public License (GPL)",
