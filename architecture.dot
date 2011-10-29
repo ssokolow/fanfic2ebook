@@ -41,5 +41,5 @@ digraph G {
     ser_html -> conv_lrf;
     conv_lrf -> output;
 
-    label="fanfic2ebook: Planned Information Flow";
+    label="fanfic2ebook: Information Flow";
 }
