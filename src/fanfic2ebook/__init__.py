@@ -47,6 +47,9 @@ __siteurl__ = "http://github.com/ssokolow/fanfic2ebook/tree/master"
 # stdlib imports
 import os, subprocess
 
+import logging
+log = logging.getLogger(__name__)
+
 # Local imports
 from personalities import Personality
 from scrapers import Scraper, HTTP
@@ -76,6 +79,10 @@ def main():
         default=False, help="List installed scrapers and personalities.")
     parser.add_option('-P', '--personality', action="store", dest="persona", metavar="NAME",
         default=None, help="Set the personality the conversion will operate under. See --list_supported.")
+    parser.add_option('-v', '--verbose', action="count", dest="verbose",
+        default=2, help="Increase the verbosity. Can be used twice for extra effect.")
+    parser.add_option('-q', '--quiet', action="count", dest="quiet",
+        default=0, help="Decrease the verbosity. Can be used twice for extra effect.")
 
     #pre_group = OptionGroup(parser, "Pre-Processing Options")
     #pre_group.add_option('--strip-accents', action="store_true", dest="strip_accents",
@@ -93,6 +100,14 @@ def main():
 
     opts, args = parser.parse_args()
     cmd = parser.get_prog_name()
+
+    # Set up clean logging to stderr
+    log_levels = [logging.CRITICAL, logging.ERROR, logging.WARNING,
+                  logging.INFO, logging.DEBUG]
+    opts.verbose = min(opts.verbose - opts.quiet, len(log_levels) - 1)
+    opts.verbose = max(opts.verbose, 0)
+    logging.basicConfig(level=log_levels[opts.verbose],
+                        format='%(levelname)s: %(message)s')
 
     if opts.list_supported:
         names = sorted(Scraper.scrapers[x].site_name for x in Scraper.scrapers)

@@ -25,6 +25,7 @@ from lxml import html
 
 # local imports
 from data_structures import Story, Chapter
+from retrieval import HTTP
 
 # -- Hopefully temporary hack to ensure safe stdout output --
 import locale, sys
@@ -35,51 +36,7 @@ def prnt(unistr):
     print unistr
 # --
 
-class HTTP(object):
-    """Simple wrapper which tries to use httplib2 for chapter retrieval
-    and falls back to urllib2.
-    """
-    #base_UA = "%s/%s" % (__appname__, "Unknown")
-    shortname = 'fanfic2ebook'
-
-    @classmethod
-    def set_base_UA(cls, UA_string):
-        cls.base_UA = UA_string
-
-    @classmethod
-    def get_cache_dir(cls):
-        """Retrieve a cache directory appropriate for the current platform."""
-        # Portable cache directory placement
-        if os.name == 'nt':
-            from winpaths import get_local_appdata
-            croot = get_local_appdata()
-        else:
-            croot = os.environ.get("XDG_CACHE_HOME", os.path.expanduser("~/.cache"))
-        return os.path.join(croot, cls.shortname, 'http_cache')
-
-    def __init__(self):
-        try:
-            import httplib2
-            self.cachedir = self.get_cache_dir()
-            self.http = httplib2.Http(httplib2.FileCache(self.cachedir))
-            self.full_UA = "%s (httplib2 present. HTTP Cache enabled.)" % self.base_UA
-            self.with_httplib2 = True
-        except ImportError:
-            import urllib2
-            self.full_UA = "%s (httplib2 absent. Local cache only.)" % self.base_UA
-            self.opener = urllib2.build_opener()
-            self.opener.addheaders = [('User-agent', self.full_UA)]
-            urllib2.install_opener(self.opener)
-            self.with_httplib2 = False
-
-    def get_dom(self, url):
-        if self.with_httplib2:
-            resp, content = self.http.request(url, "GET",
-                    headers={"User-agent": self.full_UA})
-            dom = html.fromstring(content, base_url=url)
-        else:
-            dom = html.parse(self.opener.open(url)).getroot()
-        return dom
+HTTP.set_base_UA("%s/%s" % (__appname__, "Unknown"))
 
 class Scraper(object):
     """The base class for fanfiction-to-ebook scrapers."""
@@ -97,7 +54,7 @@ class Scraper(object):
     fat32_compatibility_re = re.compile('[\x00-\x19\x127"*/:<>?\\|]'
         ) #:Characters not allowed in FAT32 filenames.
 
-    def __init__(self, target=None, bundle=False, final_ext='.out'):
+    def __init__(self, target=None, bundle=False, final_ext='.out', retriever=HTTP):
         """
         Verifies the validity of the target path.
 
@@ -117,7 +74,7 @@ class Scraper(object):
         self.final_ext  = final_ext
         self.target_dir = os.path.abspath(target or os.getcwd())
         self.verify_target_dir()
-        self.http = HTTP()
+        self.http = retriever()
 
     def acquire_chapter(self, url, story=None):
         """Download and scrape a single chapter from a story.
