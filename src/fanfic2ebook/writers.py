@@ -144,7 +144,8 @@ class HTMLDirWriter(BaseHTMLWriter):
 
             with open(path, 'w') as outfile:
                 log.info("Writing chapter %s to HTML: %s", num, path)
-                outfile.write(html.tostring(self.story_to_dom(story, num)))
+                outfile.write(html.tostring(self.story_to_dom(story, num),
+                    include_meta_content_type=True))
 HTMLDirWriter.register()
 
 class HTMLFileWriter(BaseHTMLWriter):
@@ -158,7 +159,8 @@ class HTMLFileWriter(BaseHTMLWriter):
 
         with open(file_path, 'w') as outfile:
             log.info("Generating single-file bundle: %s", path)
-            outfile.write(html.tostring(self.story_to_dom(story)))
+            outfile.write(html.tostring(self.story_to_dom(story),
+                    include_meta_content_type=True))
 
 class Story(object):
     meta_mappings = {
