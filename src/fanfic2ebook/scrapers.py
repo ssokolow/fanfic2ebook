@@ -13,15 +13,11 @@
  - Check out the sites listed at http://www.ficsavers.com/index.cgi?action=list
 """
 
-__appname__ = "Fanfic Downloader for Pocket eBook Readers"
-__author__  = "Stephan Sokolow (deitarion/SSokolow)"
-__license__ = "GNU GPL 2.0 or later"
+import logging
+log = logging.getLogger(__name__)
 
 # stdlib imports
 import re, urlparse
-
-import logging
-log = logging.getLogger(__name__)
 
 # lxml imports
 from lxml import html
@@ -30,13 +26,21 @@ from lxml import html
 from data_structures import Registerable, Story, Chapter
 from retrieval import HTTP
 
-#TODO: Switch to using Registerable's implementation.
-class Scraper(object):
-    """The base class for fanfiction-to-ebook scrapers."""
-    scrapers               = {} #: Scrapers registered to be called by L{get}
-    site_name              = None #: Used by --list_supported.
-    story_url_re           = None #: This regex determines which scrapers get which files.
+def regex_key_matcher(cls, url, fallback=None):
+    """Matcher for L{Registerable} which uses tests regexes instead."""
+    for url_re in cls.subclasses:
+        if url_re.match(url):
+            return cls.subclasses[url_re]
+    return fallback
 
+class BaseScraper(Registerable):
+    story_url_re           = None #: This regex determines which scrapers get which files.
+    name                   = None #: Used by --list_supported.
+BaseScraper.init_registry(key_getter=lambda x: x.story_url_re,
+        key_matcher=regex_key_matcher)
+
+#TODO: Switch to using Registerable's implementation.
+class Scraper(BaseScraper):
     #TODO: chapter_select_xpath should be delegated to a mixin.
     chapter_select_xpath   = None #: Used by L{acquire_chapter} to find the chapter list.
     chapter_content_xpath  = None #: Used by L{acquire_chapter} to find the chapter content.
@@ -45,9 +49,6 @@ class Scraper(object):
 
     chapter_title_re       = re.compile(r"^(?P<num>\d+)\. (?P<name>.*)$"
         ) #: Common to Fanfiction.net, FicWad, and TtH <select> elements.
-    fat32_compatibility_re = re.compile('[\x00-\x19\x127"*/:<>?\\|]'
-        ) #:Characters not allowed in FAT32 filenames.
-
     def __init__(self, retriever=HTTP):
         self.http = retriever()
 
@@ -61,11 +62,11 @@ class Scraper(object):
         @return: A tuple consisting of the newly-created L{Chapter} object and
             the L{Story} object which is either newly created or was provided
             as an argument.
-        @rtype: (L{Chapter}, L{Story})
+        @rtype: L{Chapter}
         """
         # Verify the URL's syntactical validity before wasting bandwidth.
         if not self.story_url_re.match(url):
-            log.error("Not a %s story URL: %s", self.site_name, url)
+            log.error("Not a %s story URL: %s", self.name, url)
             return None
 
         # Retrieve the raw chapter (don't keep the un-parsed HTML wasting memory)
@@ -84,7 +85,7 @@ class Scraper(object):
                     author = elem.text
                     break
             story = Story(self.get_story_title(dom), author)
-            story.publisher = self.site_name
+            story.publisher = self.name
             story.categories  = self.get_story_categories(dom)
             if chapter_select is not None:
                 options = chapter_select.findall(".//option")
@@ -110,7 +111,7 @@ class Scraper(object):
         else:
             chapter = Chapter(1, '', chapter_content)
 
-        return chapter, story
+        return chapter
 
     #TODO: Instead of writing to disk, yield Chapter objects one-by-one
     # since, being already I/O-bound, we might as well be memory-efficient too.
@@ -124,12 +125,12 @@ class Scraper(object):
         @rtype: L{Story}
         """
         # Prime the story-wide metadata store to get the chapter count
-        story = self.acquire_chapter(url)[1]
+        story = self.acquire_chapter(url).story
 
         for pos, chapter_url in enumerate(story.chapter_urls):
             if not pos + 1 in story.chapters:
                 #TODO: Do this without abusing @property.
-                story.chapters = self.acquire_chapter(chapter_url, story)[0]
+                story.chapters = self.acquire_chapter(chapter_url, story)
 
         return story
 
@@ -147,38 +148,10 @@ class Scraper(object):
         """Override to implement site-specific clean-up of chapter content"""
         return content
 
-    @classmethod
-    def register(cls, scraper_class):
-        """Register a new scraper to be retrieved by L{get} based on its
-        L{story_url_re}.
-
-        @param scraper_class: The scraper class to be registered.
-        @type scraper_class: L{Scraper}
-        """
-        cls.scrapers[scraper_class.story_url_re] = scraper_class
-
-    @classmethod
-    def get(cls, url):
-        """Retrieve a scraper capable of handling the given URL.
-        See L{register} for more information.
-
-        @param url: The URL to be used to identify the desired scraper.
-        @type url: str
-
-        @return: The L{Scraper} subclass capable of handling the given URL or
-            None if no capable scraper is found.
-        @rtype: C{class}|C{None}
-        """
-
-        for url_re in cls.scrapers:
-            if url_re.match(url):
-                return cls.scrapers[url_re]
-        return None
-
 class FFNetScraper(Scraper):
     """A fanfic-to-ebook scraper for Fanfiction.net"""
-    site_name             = "Fanfiction.net"
-    story_url_re          = re.compile(r"http://www.fanfiction.net/s/\d+/\d+/.*")
+    name             = "Fanfiction.net"
+    story_url_re     = re.compile(r"http://www.fanfiction.net/s/\d+/\d+/.*")
 
     chapter_select_xpath  = ".//*[@name='chapter']"
     chapter_content_xpath = ".//*[@class='storytext']"
@@ -197,12 +170,12 @@ class FFNetScraper(Scraper):
         """Retrieve the category into which the story falls."""
         #TODO: Handle crossovers properly
         return [self.story_title_re.match(dom.find('.//title').text).group('category')]
-Scraper.register(FFNetScraper)
+FFNetScraper.register()
 
 class TtHScraper(Scraper):
     """A fanfic-to-ebook scraper for Twisting the Hellmouth"""
-    site_name             = "Twisting the Hellmouth"
-    story_url_re          = re.compile(r"http://www.tthfanfic.org/(Story-\d+(-\d+)?(/.*)?|story.php\?no=\d+)")
+    name             = "Twisting the Hellmouth"
+    story_url_re     = re.compile(r"http://www.tthfanfic.org/(Story-\d+(-\d+)?(/.*)?|story.php\?no=\d+)")
 
     chapter_select_xpath  = ".//select[@id='chapnav']"
     chapter_content_xpath = ".//a[@name='storybody']/.."
@@ -216,12 +189,12 @@ class TtHScraper(Scraper):
         if elem_h3 is not None:
             # elem_h3 isn't present on oneshots
             elem_h3.getparent().remove(elem_h3)
-Scraper.register(TtHScraper)
+TtHScraper.register()
 
 class FicWadScraper(Scraper):
     """A fanfic-to-ebook scraper for FicWad"""
-    site_name             = "FicWad"
-    story_url_re          = re.compile(r"http://www.ficwad.com/story/\d+")
+    name             = "FicWad"
+    story_url_re     = re.compile(r"http://www.ficwad.com/story/\d+")
 
     chapter_select_xpath  = ".//select[@name='goto']"
     chapter_content_xpath = ".//div[@id='storytext']"
@@ -230,4 +203,4 @@ class FicWadScraper(Scraper):
     def get_story_title(self, dom):
         """Extract the FicWad story title (Odder than it sounds)"""
         return dom.find('.//h3').getchildren()[-1].text
-Scraper.register(FicWadScraper)
+FicWadScraper.register()
