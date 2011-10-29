@@ -148,7 +148,7 @@ class HTMLDirWriter(BaseHTMLWriter):
                 continue
 
             with open(target, 'w') as outfile:
-                log.info("Writing chapter %s to HTML: %s", num, path)
+                log.info("Writing chapter %s to HTML: %s", num, target)
                 outfile.write(html.tostring(self.story_to_dom(story, num),
                     include_meta_content_type=True))
 HTMLDirWriter.register()
@@ -159,11 +159,11 @@ class HTMLFileWriter(BaseHTMLWriter):
 
     def write(self, story, path):
         """Serialize the given C{story} to C{path}."""
-        file_path = os.path.join(path,
+        target = os.path.join(path,
             '%s.html' % self.prepare_filename(story.title))
 
-        with open(file_path, 'w') as outfile:
-            log.info("Generating single-file bundle: %s", path)
+        with open(target, 'w') as outfile:
+            log.info("Generating single-file bundle: %s", target)
             outfile.write(html.tostring(self.story_to_dom(story),
                     include_meta_content_type=True))
 HTMLFileWriter.register()
