@@ -75,7 +75,7 @@ def main():
         "story into a single file with chapter headings and a table of contents.")
     parser.add_option('-t', '--target', action="store", dest="target", metavar="DIR",
         default=os.getcwd(), help="Specify a target directory other than the current working directory.")
-    parser.add_option('--list_supported', action="store_true", dest="list_supported",
+    parser.add_option('--list-supported', action="store_true", dest="list_supported",
         default=False, help="List installed scrapers and personalities.")
     parser.add_option('-P', '--personality', action="store", dest="persona", metavar="NAME",
         default=None, help="Set the personality the conversion will operate under. See --list_supported.")
@@ -102,8 +102,7 @@ def main():
 
     if opts.list_supported:
         #TODO: Merge this display mechanism into Registerable.
-        names = sorted(Scraper.scrapers[x].site_name for x in Scraper.scrapers)
-        print "Scrapers:\n\t" + '\n\t'.join(names)
+        print "Scrapers:\n\t" + '\n\t'.join(sorted(x.name for x in Scraper.subclasses.values()))
         print
         print "Writers:\n\t" + '\n\t'.join(sorted(BaseWriter.subclasses))
         print
