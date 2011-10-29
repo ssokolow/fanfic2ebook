@@ -75,3 +75,8 @@ class EPubPersonality(BaseCalibrePersonality):
     out_ext = '.epub'
 EPubPersonality.register()
 
+class MobiPersonality(BaseCalibrePersonality):
+    """A personality for generating Mobipocket files."""
+    name  = 'fanfic2mobi'
+    out_ext = '.mobi'
+MobiPersonality.register()
