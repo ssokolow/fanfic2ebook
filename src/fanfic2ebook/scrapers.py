@@ -18,32 +18,26 @@ __author__  = "Stephan Sokolow (deitarion/SSokolow)"
 __license__ = "GNU GPL 2.0 or later"
 
 # stdlib imports
-import errno, os, re, urlparse
+import re, urlparse
+
+import logging
+log = logging.getLogger(__name__)
 
 # lxml imports
 from lxml import html
 
 # local imports
-from data_structures import Story, Chapter
+from data_structures import Registerable, Story, Chapter
 from retrieval import HTTP
 
-# -- Hopefully temporary hack to ensure safe stdout output --
-import locale, sys
-pref_enc = sys.stdout.encoding or locale.getpreferredencoding() or 'utf8'
-def prnt(unistr):
-    if isinstance(unistr, unicode):
-        unistr = unistr.encode(pref_enc, 'ignore')
-    print unistr
-# --
-
-HTTP.set_base_UA("%s/%s" % (__appname__, "Unknown"))
-
+#TODO: Switch to using Registerable's implementation.
 class Scraper(object):
     """The base class for fanfiction-to-ebook scrapers."""
     scrapers               = {} #: Scrapers registered to be called by L{get}
     site_name              = None #: Used by --list_supported.
     story_url_re           = None #: This regex determines which scrapers get which files.
 
+    #TODO: chapter_select_xpath should be delegated to a mixin.
     chapter_select_xpath   = None #: Used by L{acquire_chapter} to find the chapter list.
     chapter_content_xpath  = None #: Used by L{acquire_chapter} to find the chapter content.
     author_url_fragment    = None #: Used by L{acquire_chapter} to find the author's name.
@@ -54,25 +48,15 @@ class Scraper(object):
     fat32_compatibility_re = re.compile('[\x00-\x19\x127"*/:<>?\\|]'
         ) #:Characters not allowed in FAT32 filenames.
 
-    def __init__(self, target=None, bundle=False, final_ext='.out', retriever=HTTP):
+    def __init__(self, final_ext='.out', retriever=HTTP):
         """
         Verifies the validity of the target path.
 
-        @param target: The directory in which downloaded stories should be
-            stored. Per-story directories will be created within this directory
-            unless the sanitized title of the story matches the directory name.
-            (it's more intuitive for end-users that way)
-            Defaults to the current working directory if not specified.
-        @param bundle: Whether to also generate a single-file copy of the story.
         @param final_ext: The extension to use when constructing the 'outfile'
             parameter to be passed to post-processors.
-        @type target: str
-        @type bundle: bool
         @type final_ext: str
         """
-        self.bundle     = bundle
         self.final_ext  = final_ext
-        self.target_dir = os.path.abspath(target or os.getcwd())
         self.verify_target_dir()
         self.http = retriever()
 
@@ -90,7 +74,7 @@ class Scraper(object):
         """
         # Verify the URL's syntactical validity before wasting bandwidth.
         if not self.story_url_re.match(url):
-            prnt("Not a %s story URL: %s" % (self.site_name, url))
+            log.error("Not a %s story URL: %s", self.site_name, url)
             return None
 
         # Retrieve the raw chapter (don't keep the un-parsed HTML wasting memory)
@@ -109,7 +93,7 @@ class Scraper(object):
                     author = elem.text
                     break
             story = Story(self.get_story_title(dom), author)
-            story.site_name = self.site_name
+            story.publisher = self.site_name
             story.category  = self.get_story_category(dom)
             if chapter_select is not None:
                 options = chapter_select.findall(".//option")
@@ -137,6 +121,8 @@ class Scraper(object):
 
         return chapter, story
 
+    #TODO: Instead of writing to disk, yield Chapter objects one-by-one
+    # since, being already I/O-bound, we might as well be memory-efficient too.
     def download_fic(self, url):
         """Download and save an entire story as a set of cleaned HTML files.
 
@@ -149,108 +135,25 @@ class Scraper(object):
         # Prime the story-wide metadata store to get the chapter count
         story = self.acquire_chapter(url)[1]
 
-        # Minimize the wasted bandwidth if it wasn't possible to avoid it
-        # altogether. (and create the target dir if necessary)
-        if os.path.basename(self.target_dir).strip().lower() == story.title.strip().lower():
-            fic_target = self.target_dir
-        else:
-            fic_target = os.path.join(self.target_dir, self.prepare_filename(story.title))
-            self.verify_target_dir(fic_target, create=True)
-
         for pos, chapter_url in enumerate(story.chapter_urls):
-            target   = os.path.join(fic_target, "%s - %s.html" % (
-                            self.prepare_filename(story.title), pos + 1))
-
-            # Avoid re-downloading whenever possible
-            if os.path.exists(target):
-                chap_tmp = Chapter.from_html(target)
-                chap_tmp.path = target
-                story.add_chapters(chap_tmp)
-                prnt("Chapter already exists. Skipping: %s" % target)
-                continue
-
             if not pos + 1 in story.chapters:
-                chap_tmp = self.acquire_chapter(chapter_url, story)[0]
-                chap_tmp.path = target
-                story.add_chapters(chap_tmp)
-
-            prnt("Writing %s" % target)
-            story.write(target, pos + 1)
-
-        if self.bundle:
-            story.path = os.path.join(fic_target,
-                '%s.html' % self.prepare_filename(story.title))
-            story.final_path = os.path.join(fic_target,
-                '%s.%s' % (self.prepare_filename(story.title), self.final_ext.lstrip('.')))
-
-            prnt("Generating single-file bundle: %s" % story.path)
-            story.write(story.path)
+                #TODO: Do this without abusing @property.
+                story.chapters = self.acquire_chapter(chapter_url, story)[0]
 
         return story
 
-    def prepare_filename(self, in_str):
-        """Given a story title or other unsafe string, sanitize any characters
-        which cannot be put into FAT32 long filenames.
-
-        @param in_str: Any string to be be used as a filename component.
-        @type in_str: str|unicode
-
-        @return: The sanitized string.
-        @rtype: str|unicode"""
-        return self.fat32_compatibility_re.sub('_', in_str)
-
-    def verify_target_dir(self, target=None, create=False):
-        """Check the given path to ensure it's suitable for saving stories.
-
-        @param target: The directory to be checked for apropriateness.
-        @param create: Indicates whether to create the target directory if it
-            does not exist.
-        @type target: str
-        @type create: bool
-
-        @return: True if the directory exists or has been created. False otherwise.
-        @rtype: bool
-
-        @raise IOError: Raises IOError when the target is not a directory or
-            we lack insufficient permissions.
-
-        @todo: Make sure this handles Unicode properly.
-        """
-        target = target or self.target_dir
-
-        if os.path.exists(target):
-            if not os.path.isdir(target):
-                raise IOError(errno.ENOTDIR, errno.errorcode[errno.ENOTDIR], target)
-            if not os.access(target, os.W_OK):
-                raise IOError(errno.EACCES, "%s (%s)" % (errno.errorcode[errno.EACCES],
-                    "Target directory is not writable."), target)
-        else:
-            parent = os.path.split(target)[0]
-            if not os.access(parent, os.W_OK | os.X_OK):
-                raise IOError(errno.EACCES, "%s (%s)" % (errno.errorcode[errno.EACCES],
-                    "Target directory does not exist and cannot be created."), parent)
-            elif create:
-                prnt("Target directory does not exist. Creating: %s" % target)
-                os.makedirs(target)
-            else:
-                return False
-        return True
-
     def get_story_title(self, dom):
-        """Each L{Scraper} subclass overrides this to implement required functionality."""
+        """Override to extract the story title."""
         raise NotImplementedError("You must override this in a subclass")
     def resolve_chapter_url(self, instr, base_url, dom):
-        """L{Scraper} subclasses override this if the values of the chapter <option>s are
-            neither relative nor absolute URLs."""
+        """Override this if the values of the chapter <option>s are neither
+           relative nor absolute URLs."""
         return urlparse.urljoin(base_url, instr)
     def get_story_category(self, dom):
-        """L{Scraper} subclasses may override this to retrieve the category
-           (eg. source series) that the fic falls into on the host site but
-           it is not required."""
+        """(optional) Override to implement scraping of category/fandom/etc."""
         return ''
     def custom_content_cleaning(self, content):
-        """L{Scraper} subclasses may override this to implement site-specific
-           clean-up of chapter content if necessary"""
+        """Override to implement site-specific clean-up of chapter content"""
         return content
 
     @classmethod
@@ -314,7 +217,6 @@ class TtHScraper(Scraper):
     author_url_fragment   = '/AuthorStories-'
 
     def get_story_title(self, dom):
-        """Extract the Twisting the Hellmouth story title"""
         return dom.find('.//h2').text
     def custom_content_cleaning(self, content):
         """Remove the site's chapter heading since we're adding our own."""

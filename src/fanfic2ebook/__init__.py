@@ -52,7 +52,9 @@ log = logging.getLogger(__name__)
 
 # Local imports
 from personalities import Personality
-from scrapers import Scraper, HTTP
+from retrieval import HTTP
+from scrapers import Scraper
+from writers import Writer
 
 # Set the User-Agent string
 HTTP.set_base_UA('%s/%s +%s' % (__appname__, __version__, __siteurl__))
@@ -70,9 +72,9 @@ def main():
 
     parser = OptionParser(version="%%prog v%s" % __version__,
         usage="%prog [options] <url> ...", description=descr, epilog=epilog)
-    parser.add_option('-b', '--bundle', action="store_true", dest="bundle",
-        default=False, help="Also bundle the entire story into a single file" +
-                            "with chapter headings and a table of contents.")
+    parser.add_option('-b', '--bundle', action="store", dest="writer",
+        default='htmldir', value='htmlfile', help="Also bundle the entire "
+        "story into a single file with chapter headings and a table of contents.")
     parser.add_option('-t', '--target', action="store", dest="target", metavar="DIR",
         default=os.getcwd(), help="Specify a target directory other than the current working directory.")
     parser.add_option('--list_supported', action="store_true", dest="list_supported",
@@ -120,7 +122,7 @@ def main():
         parser.print_help()
         parser.exit()
 
-    persona = Personality.get(opts.persona or cmd)()
+    persona = Personality.get(opts.persona or cmd, True)()
     for option in persona.opts:
         setattr(opts, option, persona.opts[option])
 
@@ -128,26 +130,40 @@ def main():
         opts.bundle = True
 
     for url_arg in args:
-        scraper = Scraper.get(url_arg)(opts.target, opts.bundle, opts.final_ext)
+        # Set up the environment and grab the fic.
+        scraper = Scraper.get(url_arg)(opts.final_ext)
+        writer = Writer.get(opts.writer)
         try:
-            downloaded_story = scraper.download_fic(url_arg)
+            story = scraper.download_fic(url_arg)
         except Exception, err:
-            print "Failed to retrieve story %s" % url_arg
-            print "TODO: Handle this properly"
+            log.error("Failed to retrieve story %s", url_arg)
+            log.critical("TODO: Handle retrieval failures properly")
             continue
 
-        persona.postproc(downloaded_story)
+        # Create the "Story Title" folder but don't nest identical folders.
+        target_dir = os.path.abspath(opts.target or os.getcwd())
+        if os.path.basename(target_dir).strip().lower() == story.title.strip().lower():
+            fic_target = target_dir
+        else:
+            fic_target = os.path.join(target_dir, writer.prepare_filename(story.title))
+        writer.verify_target_dir(fic_target, create=True)
+
+        writer.write(story, fic_target)
+
+        #    story.final_path = os.path.join(fic_target,
+        #        '%s.%s' % (self.prepare_filename(story.title), self.final_ext.lstrip('.')))
+        persona.postproc(story)
 
         if opts.postproc:
             inputs = {
                 'appname'   : "%s v%s" % (__appname__, __version__),
-                'author'    : downloaded_story.author,
-                'bundle'    : downloaded_story.path,
-                'category'  : downloaded_story.category,
-                'coverfile' : downloaded_story.cover,
-                'outfile'   : downloaded_story.final_path,
-                'site_name' : downloaded_story.site_name,
-                'title'     : downloaded_story.title
+                'author'    : story.author,
+                'bundle'    : story.path,
+                'category'  : story.category,
+                'coverfile' : story.cover,
+                'outfile'   : story.final_path,
+                'site_name' : story.site_name,
+                'title'     : story.title
             }
 
             for pp_cmdline in opts.postproc:

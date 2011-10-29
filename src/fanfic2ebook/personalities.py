@@ -14,43 +14,18 @@ __version__ = "0.0pre5"
 
 import os, subprocess
 
-class Personality(object):
+from data_structures import Registerable
+
+class Personality(Registerable):
     """Defines an output mapping which can be accessed both by the -P argument
     and by alternatively-named symlinks."""
-    personalities = {}              #: A class-level dict used by L{get}
     name          = 'fanfic2html'   #: The name by which the personality should be indexed.
     opts          = {}              #: A dict of changes to make to the opts
 
     def postproc(self, story):
         """L{Personality} subclasses override this to define post-processor behaviour."""
         pass
-
-    @classmethod
-    def register(cls, personality_class):
-        """Register a new personality to be retrieved by L{get} using its
-        L{name}.
-
-        @param personality_class: The personality class to be registered.
-        @type personality_class: L{Personality}
-        """
-
-        if personality_class.name in cls.personalities:
-            print "WARNING: Overriding existing personality name: %s" % personality_class.name
-        cls.personalities[personality_class.name] = personality_class
-
-    @classmethod
-    def get(cls, name):
-        """Retrieve a personality by name.
-        See L{register} for more information.
-
-        @param name: The name to be used to identify the desired personality.
-        @type name: str
-
-        @return: The L{Personalirt} subclass referenced by the given name or
-            the base personality if no match is found.
-        @rtype: C{class}
-        """
-        return cls.personalities.get(name, cls)
+Personality.init_registry()
 Personality.register(Personality)
 
 class BBeBPersonality(Personality):
@@ -77,7 +52,7 @@ class BBeBPersonality(Personality):
             return True
         except subprocess.CalledProcessError:
             return False
-Personality.register(BBeBPersonality)
+BBeBPersonality.register()
 
 class EPubPersonality(Personality):
     """A personality for generating ePub files."""
@@ -103,7 +78,7 @@ class EPubPersonality(Personality):
             return True
         except subprocess.CalledProcessError:
             return False
-Personality.register(EPubPersonality)
+EPubPersonality.register()
 
 class OEBPersonality(Personality):
     """A personality for generating oeb files."""
@@ -135,4 +110,4 @@ class OEBPersonality(Personality):
             os.rename(story.oeb_path, story.final_path)
 
 # OEB support is completely untested.
-#Personality.register(OEBPersonality)
+#OEBPersonality.register()
