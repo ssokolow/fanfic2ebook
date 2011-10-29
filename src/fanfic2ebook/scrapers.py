@@ -22,7 +22,7 @@ import re, urlparse
 # lxml imports
 from lxml import html
 from lxml.etree import XPath
-from lxml.cssselect import CSSSelector
+from lxml.cssselect import CSSSelector as CSS
 
 # local imports
 from data_structures import Registerable, Story, Chapter
@@ -48,15 +48,12 @@ class Scraper(BaseScraper):
     chapter_content_xpath  = None #: Used by L{acquire_chapter} to find the chapter content.
     author_url_fragment    = None #: Used by L{acquire_chapter} to find the author's name.
     not_chapters           = ["story index", "table of contents"] #: Must be lowercase.
-
-    #TODO: Make this take either a CSSSelector object or an XPath object.
-    unwanted_elements      = []   #: Set to a list of CSS selectors to remove things.
+    unwanted_elements      = []   #: Set to a list of CSS or XPath selectors to remove things.
 
     chapter_title_re       = re.compile(r"^(?P<num>\d+)\. (?P<name>.*)$"
         ) #: Common to Fanfiction.net, FicWad, and TtH <select> elements.
     def __init__(self, retriever=HTTP):
         self.http = retriever()
-        self.removal_selectors = [CSSSelector(x) for x in self.unwanted_elements]
 
     def acquire_chapter(self, url, story=None):
         """Download and scrape a single chapter from a story.
@@ -101,7 +98,7 @@ class Scraper(BaseScraper):
             else:
                 story.chapter_urls = [url]
 
-        for selector in self.removal_selectors:
+        for selector in self.unwanted_elements:
             [x.getparent().remove(x) for x in selector(chapter_content)]
 
         cleaned = self.custom_content_cleaning(chapter_content)
@@ -167,7 +164,7 @@ class FFNetScraper(Scraper):
     chapter_select_xpath  = ".//*[@name='chapter']"
     chapter_content_xpath = ".//*[@class='storytext']"
     author_url_fragment   = '/u/'
-    unwanted_elements     = ['.a2a_kit']
+    unwanted_elements     = [CSS('.a2a_kit')]
     story_title_re        = re.compile(r"^(?P<title>.+?)(,? Chapter (?P<chapter>.+?))?, an? (?P<category>.+?)( crossover)? fanfic" +
         " - FanFiction.Net$", re.IGNORECASE ) #: Used to extract the story's title and fandom from <title>
 
@@ -192,7 +189,7 @@ class TtHScraper(Scraper):
     chapter_select_xpath  = ".//select[@id='chapnav']"
     chapter_content_xpath = ".//a[@name='storybody']/.."
     author_url_fragment   = '/AuthorStories-'
-    unwanted_elements     = ['h3']
+    unwanted_elements     = [CSS('h3')]
 
     def get_story_title(self, dom):
         return dom.find('.//h2').text
