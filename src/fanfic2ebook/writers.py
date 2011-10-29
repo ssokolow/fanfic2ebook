@@ -34,8 +34,8 @@ class BaseHTMLWriter(BaseWriter):
         """
         elem_name = 'chapter_%d' % chapter.number
         return E.DIV(E.CLASS('chapter'),
-            E.H2( E.CLASS('chapter_title'), chapter.title),
             E.A(  E.CLASS('chapter_num'),   id=elem_name, name=elem_name),
+            E.H2( E.CLASS('chapter_title'), chapter.title),
             E.DIV(E.CLASS('content'),       chapter.content)
         )
 
@@ -166,6 +166,7 @@ class HTMLFileWriter(BaseHTMLWriter):
             log.info("Generating single-file bundle: %s", path)
             outfile.write(html.tostring(self.story_to_dom(story),
                     include_meta_content_type=True))
+HTMLFileWriter.register()
 
 #TODO: ================= Finish converting the following ==================
 
