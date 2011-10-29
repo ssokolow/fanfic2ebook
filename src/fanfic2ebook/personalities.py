@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-"""Personalities for fanfic2ebook
+"""Post-processing mode definitions
 
 @todo:
  - Test the fanfic2oeb Personality and build upon it to write personalities based on
@@ -18,7 +18,7 @@ class BasePersonality(Registerable):
     opts          = {}              #: A dict of changes to make to the opts
 
     def postproc(self, story, infile):
-        """L{Personality} subclasses override this to define post-processor behaviour."""
+        """Override this to define post-processor behaviour."""
         pass
 BasePersonality.init_registry()
 BasePersonality.register()

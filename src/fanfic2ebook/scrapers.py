@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-"""Scrapers for fanfic2ebook
+"""Site scraper definitions
 
 @todo:
  - Add a summary-extraction method and have the default implementation look for a paragraph

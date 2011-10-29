@@ -1,10 +1,13 @@
 # -*- coding: utf-8 -*-
-"""Serializers for fanfic2ebook"""
+"""Modules for seralizing stories to various formats
+
+@todo: Support writing to gzip/bzip2-compressed save sets.
+"""
 
 import logging
 log = logging.getLogger(__name__)
 
-import errno, os
+import errno, os, re
 from lxml import html
 from lxml.html import builder as E
 
@@ -12,6 +15,8 @@ from data_structures import Registerable
 
 class BaseWriter(Registerable):
     """Base class for all Writers."""
+    fat32_compatibility_re = re.compile('[\x00-\x19\x127"*/:<>?\\|]'
+        ) #:Characters not allowed in FAT32 filenames.
 
     def write(self, story, path):
         """Serialize the given C{story} to C{path}."""
@@ -162,6 +167,8 @@ class HTMLFileWriter(BaseHTMLWriter):
             outfile.write(html.tostring(self.story_to_dom(story),
                     include_meta_content_type=True))
 
+#TODO: ================= Finish converting the following ==================
+
 class Story(object):
     meta_mappings = {
             'Author' : 'author',
@@ -191,7 +198,7 @@ class Story(object):
         file-like object.
 
         @param path: A DOM, path, string, or file-like object
-            originating with L{to_dom}.
+            originating with L{BaseHTMLWriter.story_to_dom}.
         @type path: C{basestring} or file-like object
 
         @return: A Story object.
@@ -217,7 +224,7 @@ class Chapter(object):
         """Load a chapter from a DOM, path, string, or file-like object
 
         @param html_in: An lxml HTML DOM, path, string, or file-like object
-            containing a chapter written out by L{to_dom}.
+            containing a chapter written out by L{BaseHTMLWriter.chapter_to_dom}.
         @type html_in: C{lxml.html.HtmlElement},C{basestring}, or file-like object
 
         @return: A Chapter object.

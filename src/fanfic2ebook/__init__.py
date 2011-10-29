@@ -9,8 +9,7 @@ Features:
  - Autodetects story metadata. Requires only the URL for input.
  - Strips site templating to ensure a comfortable read on portable eBook readers.
  - Supports bundling all chapters into a single file for easy conversion.
- - Provides built-in support for converting to LRF, OEB, and ePub via Calibre.
- - Supports calling post-processors with keyword-substituted arguments.
+ - Built-in support for converting to ePub, MobiPocket, and LRF via Calibre.
  - Caches retrieved pages for convenience and efficiency. (and to avoid the risk
    of getting banned by fanfiction hosts for wasting bandwidth if it gets popular)
 
@@ -18,7 +17,6 @@ Features:
     It's basically a generic downloader for serial web-published fiction.
 
 @todo:
- - Support transparently resuming from gzip/bzip2-compressed save sets.
  - Support custom path generation and a config file so I can automatically
    save to "~/Documents/Fanfiction/<series>/<story>/<story> - <chapter>.html"
  - I suspect it's not an encoding issue but a font issue that keeps certain
@@ -41,7 +39,7 @@ Features:
 __appname__ = "Fanfic Downloader for Pocket eBook Readers"
 __author__  = "Stephan Sokolow (deitarion/SSokolow)"
 __license__ = "GNU GPL 2.0 or later"
-__version__ = "0.1pre2"
+__version__ = "0.1pre3"
 __siteurl__ = "http://github.com/ssokolow/fanfic2ebook/tree/master"
 
 # stdlib imports
@@ -72,8 +70,8 @@ def main():
 
     parser = OptionParser(version="%%prog v%s" % __version__,
         usage="%prog [options] <url> ...", description=descr, epilog=epilog)
-    parser.add_option('-b', '--bundle', action="store", dest="writer",
-        default='htmldir', value='htmlfile', help="Also bundle the entire "
+    parser.add_option('-b', '--bundle', action="store_const", dest="writer",
+        default='htmldir', const='htmlfile', help="Also bundle the entire "
         "story into a single file with chapter headings and a table of contents.")
     parser.add_option('-t', '--target', action="store", dest="target", metavar="DIR",
         default=os.getcwd(), help="Specify a target directory other than the current working directory.")

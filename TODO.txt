@@ -1,3 +1,5 @@
+epydoc -v fanfic2ebook --exclude-introspect=winpaths
+
 fanfic2ebook rework plans:
 - Obey all the "@todo: Implement" notes in the Story and Chapter metadata fields.
 - <link rel="schema.DC" href="http://purl.org/dc/elements/1.1/" > (http://dublincore.org/documents/dc-html/)

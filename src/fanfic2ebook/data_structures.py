@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-"""Data structures for fanfic2ebook"""
+"""Shared data structures"""
 
 import logging
 log = logging.getLogger(__name__)
@@ -48,7 +48,7 @@ class Story(object):
         """
         @param    title: The story's title
         @param   author: The author's name
-        @param chapters: See L{add_chapters}
+        @param chapters: A list of L{Chapter} objects belonging to this Story.
         @type    title: basestring
         @type   author: basestring
         """
@@ -61,12 +61,10 @@ class Story(object):
         return "<Chapter(%s, %s, %s)>" % (repr(self.title),
             repr(self.author), self.chapters and '...' or None)
 
-    @property
-    def chapters(self):
+    def get_chapters(self):
         return self._chapters
 
-    @chapters.set
-    def chapters(self, value):
+    def set_chapters(self, value):
         """Default to append rather than replace for chapter list.
 
         @todo: Re-think this and stop relying on it in L{Scraper}.
@@ -91,6 +89,8 @@ class Story(object):
                 log.warn("Overwriting existing chapter %d" % pos)
 
             self._chapters[pos] = obj
+
+    chapters = property(get_chapters, set_chapters)
 
 class Chapter(object):
     """The in-memory representation of a chapter"""
@@ -120,33 +120,37 @@ class Chapter(object):
         return "<Chapter(%s, %s, %s)>" % (repr(self.number),
             repr(self.title), self.content and '...' or None)
 
-    @property
-    def content(self):
+    def get_content(self):
         return self._content
 
-    @content.setter
-    def content(self, value):
+    def set_content(self, value):
         self._content = value
         if value is not None:
             content_cleaner(self._content)
 
+    content = property(get_content, set_content)
+
 class Registerable(object):
     """Defines a class which can register and look up subclasses by name."""
-    subclasses = {}     #: A class-level dict used by L{get}
+    subclasses = {}     #: A class-level dict used by C{get}
     name = None         #: Override in subclasses to define the lookup key
 
     @classmethod
-    def init_registry(cls):
+    def init_registry(cls, key_getter=lambda x: x.name,
+            key_matcher=(lambda cls, name, flbk: cls.subclasses.get(name, flbk))):
         """Declare this as the root of a new lookup registry."""
         cls.subclasses = {}
 
+        # Can't attach these directly to the class or they're methods.
+        cls.key_ = {'getter': key_getter, 'matcher': key_matcher}
+
     @classmethod
-    def register(cls, set_fallback=False):
+    def register(cls):
         """Register a new subclass to be retrieved by L{get} using its L{name}."""
 
         if cls.name in cls.subclasses:
             log.warn("Replacing existing subclass: %s", cls.name)
-        cls.subclasses[cls.name] = cls
+        cls.subclasses[cls.key_['getter'](cls)] = cls
 
     @classmethod
     def get(cls, name, fallback=None):
@@ -159,4 +163,4 @@ class Registerable(object):
         @return: The subclass referenced by the given name or C{fallback}.
         @rtype: C{class}
         """
-        return cls.subclasses.get(name, fallback)
+        return cls.key_['matcher'](cls, name, fallback)
