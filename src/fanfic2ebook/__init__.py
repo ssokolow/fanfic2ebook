@@ -114,22 +114,20 @@ def main():
         parser.print_help()
         parser.exit()
 
-    persona = BasePersonality.get(opts.persona or cmd, True)()
+    persona = BasePersonality.get(opts.persona or cmd, BasePersonality)()
     for option in persona.opts:
         setattr(opts, option, persona.opts[option])
-
-    if opts.postproc:
-        opts.bundle = True
 
     for url_arg in args:
         # Set up the environment and grab the fic.
         scraper = Scraper.get(url_arg)()
-        writer = BaseWriter.get(opts.writer)
+        writer = BaseWriter.get(opts.writer)()
         try:
             story = scraper.download_fic(url_arg)
         except Exception, err:
             log.error("Failed to retrieve story %s", url_arg)
             log.critical("TODO: Handle retrieval failures properly")
+            raise
             continue
 
         # Create the "Story Title" folder but don't nest identical folders.
@@ -141,6 +139,8 @@ def main():
         writer.verify_target_dir(fic_target, create=True)
 
         writer.write(story, fic_target)
-        persona.postproc(story)
+
+        #FIXME: I need to tie this to bundle mode again.
+        persona.postproc(story, fic_target)
 if __name__ == '__main__':
 	main()

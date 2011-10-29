@@ -147,7 +147,7 @@ class HTMLDirWriter(BaseHTMLWriter):
                 log.info("Chapter already exists. Skipping: %s", target)
                 continue
 
-            with open(path, 'w') as outfile:
+            with open(target, 'w') as outfile:
                 log.info("Writing chapter %s to HTML: %s", num, path)
                 outfile.write(html.tostring(self.story_to_dom(story, num),
                     include_meta_content_type=True))

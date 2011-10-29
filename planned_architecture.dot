@@ -24,7 +24,7 @@ digraph G {
 
     subgraph cluster_conversion {
         label = "Conversion";
-        conv_etc  [label="...",style=dashed];
+        conv_mobi  [label="Mobi"];
         conv_lrf  [label="LRF/BeBB"];
         conv_epub [label="ePub"];
     }

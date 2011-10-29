@@ -137,6 +137,7 @@ class Scraper(BaseScraper):
     def get_story_title(self, dom):
         """Override to extract the story title."""
         raise NotImplementedError("You must override this in a subclass")
+
     def resolve_chapter_url(self, instr, base_url, dom):
         """Override this if the values of the chapter <option>s are neither
            relative nor absolute URLs."""
