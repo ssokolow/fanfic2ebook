@@ -48,16 +48,7 @@ class Scraper(object):
     fat32_compatibility_re = re.compile('[\x00-\x19\x127"*/:<>?\\|]'
         ) #:Characters not allowed in FAT32 filenames.
 
-    def __init__(self, final_ext='.out', retriever=HTTP):
-        """
-        Verifies the validity of the target path.
-
-        @param final_ext: The extension to use when constructing the 'outfile'
-            parameter to be passed to post-processors.
-        @type final_ext: str
-        """
-        self.final_ext  = final_ext
-        self.verify_target_dir()
+    def __init__(self, retriever=HTTP):
         self.http = retriever()
 
     def acquire_chapter(self, url, story=None):
@@ -94,7 +85,7 @@ class Scraper(object):
                     break
             story = Story(self.get_story_title(dom), author)
             story.publisher = self.site_name
-            story.category  = self.get_story_category(dom)
+            story.categories  = self.get_story_categories(dom)
             if chapter_select is not None:
                 options = chapter_select.findall(".//option")
                 if options[0].text.strip().lower() in self.not_chapters:
@@ -149,8 +140,8 @@ class Scraper(object):
         """Override this if the values of the chapter <option>s are neither
            relative nor absolute URLs."""
         return urlparse.urljoin(base_url, instr)
-    def get_story_category(self, dom):
-        """(optional) Override to implement scraping of category/fandom/etc."""
+    def get_story_categories(self, dom):
+        """(optional) Override to implement scraping of categories/fandoms/etc."""
         return ''
     def custom_content_cleaning(self, content):
         """Override to implement site-specific clean-up of chapter content"""
@@ -202,9 +193,10 @@ class FFNetScraper(Scraper):
     def get_story_title(self, dom):
         """Extract the story title from the Fanfiction.net <title> element."""
         return self.story_title_re.match(dom.find('.//title').text).group('title')
-    def get_story_category(self, dom):
+    def get_story_categories(self, dom):
         """Retrieve the category into which the story falls."""
-        return self.story_title_re.match(dom.find('.//title').text).group('category')
+        #TODO: Handle crossovers properly
+        return [self.story_title_re.match(dom.find('.//title').text).group('category')]
 Scraper.register(FFNetScraper)
 
 class TtHScraper(Scraper):

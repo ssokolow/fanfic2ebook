@@ -31,11 +31,14 @@ class Story(object):
     author     = None #XXX: Should I just trust sites to specify a primary author or plan for co-authorship?
     author_url = None #: @todo: Implement
     _chapters  = None
-    category   = ''
+    categories = None
     cover      = ''
-    language   = None #: @todo: Implement (http://www.ietf.org/rfc/rfc3066.txt and http://xml.coverpages.org/iso639a.html)
+    language   = 'en' #: @todo: Implement (http://www.ietf.org/rfc/rfc3066.txt and http://xml.coverpages.org/iso639a.html)
     published  = None #: @todo: Implement
     publisher  = None #: @todo: Implement (Name of the fic-hosting site from which it was retrieved)
+    rating     = None #: @todo: Implement
+    series     = None #: @todo: Implement
+    series_pos = None #: @todo: Implement
     story_url  = None #: @todo: Implement
     summary    = ''   #: @todo: Implement
     updated    = None #: @todo: Implement (What about at the chapter level? Story updated value as of initial retrieval in an incremental save?)
@@ -52,6 +55,7 @@ class Story(object):
         self.title    = title
         self.author   = author
         self.chapters = chapters or {}
+        self.categories = []
 
     def __repr__(self):
         return "<Chapter(%s, %s, %s)>" % (repr(self.title),

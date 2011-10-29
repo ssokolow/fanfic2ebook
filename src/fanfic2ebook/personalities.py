@@ -7,107 +7,71 @@
  - Add support for passing profile flags to Calibre.
 """
 
-__appname__ = "Fanfic Downloader for Pocket eBook Readers"
-__author__  = "Stephan Sokolow (deitarion/SSokolow)"
-__license__ = "GNU GPL 2.0 or later"
-__version__ = "0.0pre5"
-
-import os, subprocess
+import subprocess, time
 
 from data_structures import Registerable
 
-class Personality(Registerable):
+class BasePersonality(Registerable):
     """Defines an output mapping which can be accessed both by the -P argument
     and by alternatively-named symlinks."""
     name          = 'fanfic2html'   #: The name by which the personality should be indexed.
     opts          = {}              #: A dict of changes to make to the opts
 
-    def postproc(self, story):
+    def postproc(self, story, infile):
         """L{Personality} subclasses override this to define post-processor behaviour."""
         pass
-Personality.init_registry()
-Personality.register(Personality)
+BasePersonality.init_registry()
+BasePersonality.register()
 
-class BBeBPersonality(Personality):
-    """A personality for generating LRF files."""
-    name  = 'fanfic2lrf'
-    opts  = {'bundle' : True, 'final_ext' : '.lrf'}
+class BaseCalibrePersonality(BasePersonality):
+    opts  = {'bundle' : True}
 
-    def postproc(self, story):
+    def make_flags(self, story):
+        flags = ['--book-producer', 'fanfic2ebook',
+                '--timestamp', time.time()]
+
+        for flag, key in {
+                '--authors': 'author',
+                '--comments': 'summary',
+                '--cover': 'cover',
+                '--language': 'language',
+                '--publisher': 'publisher',
+                '--rating': 'rating',
+                '--series': 'series',
+                '--series-index': 'series_pos',
+                '--title': 'title'}:
+            val = getattr(story, key, None)
+            if val:
+                flags.extend([flag, val])
+
+        if story.categories:
+            flags.extend(['--tags',
+                ','.join(x.replace(',','.') for x in story.categories)])
+
+        pubdate = story.updated or story.published or None
+        if pubdate:
+            flags.extend(['--pubdate', pubdate])
+
+        return flags
+
+    def postproc(self, story, infile):
         """Perform the transformation from HTML to LRF."""
-        cmdline = ['ebook-convert', '-t', story.title, '-a', story.author,
-            '-o', story.final_path, '--publisher', story.site_name]
+        if self.out_ext[0] != '.':
+            self.out_ext = '.%s' % self.out_ext
+        cmdline = ['ebook-convert', infile, self.out_ext, self.make_flags(story)]
 
-        if story.category:
-            cmdline.append('--category=%s' % story.category)
-        if story.cover:
-            cmdline.append('--cover=%s' % story.cover)
-        cmdline.append(story.path)
+        subprocess.check_call(cmdline)
+        #TODO: Determine whether the following is necessary.
+        # subprocess.check_call(['ebook-meta', '--category', story.categories[0]])
 
-        try:
-            subprocess.check_call(cmdline)
-            subprocess.check_call(['lrf-meta', '--classification=Fanfiction',
-                '--creator=%s v%s' % (__appname__, __version__),
-                story.final_path])
-            return True
-        except subprocess.CalledProcessError:
-            return False
+class BBeBPersonality(BaseCalibrePersonality):
+    """A personality for generating LRF/BBeB files."""
+    name  = 'fanfic2lrf'
+    out_ext = '.lrf'
 BBeBPersonality.register()
 
-class EPubPersonality(Personality):
-    """A personality for generating ePub files."""
+class EPubPersonality(BaseCalibrePersonality):
     name  = 'fanfic2epub'
-    opts  = {'bundle' : True, 'final_ext' : '.epub'}
-
-    def postproc(self, story):
-        """Perform the transformation from HTML to LRF."""
-        cmdline = ['ebook-convert', '-t', story.title, '-a', story.author,
-            '-o', story.final_path, '--publisher', story.site_name]
-
-        if story.category:
-            #TODO: Figure out how the PRS-505 displays ePub subjects.
-            #FIXME: replace() commas with something else?
-            cmdline.append('--subjects=%s' % story.category)
-        if story.cover:
-            cmdline.append('--cover=%s' % story.cover)
-        cmdline.append(story.path)
-
-        try:
-            subprocess.check_call(cmdline)
-            #TODO: Decide what to do with epub-meta.
-            return True
-        except subprocess.CalledProcessError:
-            return False
+    out_ext = '.epub'
 EPubPersonality.register()
 
-class OEBPersonality(Personality):
-    """A personality for generating oeb files."""
-    name  = 'fanfic2oeb'
-    opts  = {'bundle' : True, 'final_ext' : '.oeb'}
-
-    def postproc(self, story):
-        """Perform the transformation from HTML to OEB."""
-        story.oeb_path = os.path.splitext(story.final_path)[0] + '.opf'
-        cmdline = ['ebook-convert', '--zip', '-t', story.title, '-a', story.author,
-            '-o', story.oeb_path, '--publisher', story.site_name]
-
-        if story.category:
-            #FIXME: replace() commas with something else?
-            cmdline.append('--subjects=%s' % story.category)
-        cmdline.append(story.path)
-
-        try:
-            subprocess.check_call(cmdline)
-            self.stageTwo(story)
-            return True
-        except subprocess.CalledProcessError:
-            return False
-
-    def stageTwo(self, story):
-        """Overridden to make use of things like oeb2lit"""
-        # This keeps the final extension option working in non-overridden use.
-        if not os.path.splitext(story.final_path)[1].lower() == '.opf':
-            os.rename(story.oeb_path, story.final_path)
-
-# OEB support is completely untested.
-#OEBPersonality.register()

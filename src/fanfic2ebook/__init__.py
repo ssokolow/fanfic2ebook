@@ -45,22 +45,22 @@ __version__ = "0.1pre2"
 __siteurl__ = "http://github.com/ssokolow/fanfic2ebook/tree/master"
 
 # stdlib imports
-import os, subprocess
+import os
 
 import logging
 log = logging.getLogger(__name__)
 
 # Local imports
-from personalities import Personality
+from personalities import BasePersonality
 from retrieval import HTTP
 from scrapers import Scraper
-from writers import Writer
+from writers import BaseWriter
 
 # Set the User-Agent string
 HTTP.set_base_UA('%s/%s +%s' % (__appname__, __version__, __siteurl__))
 
 def main():
-    from optparse import OptionParser, OptionGroup
+    from optparse import OptionParser
 
     descr  = ("A simple tool for archiving fanfiction for offline reading " +
     "and converting said archives into ready-to-read eBooks for pocket " +
@@ -68,7 +68,7 @@ def main():
 
     epilog = ("As an alternative to explicitly specifying a personality, " +
     "this command will alter its behaviour if called by the following names:" +
-    " " + ', '.join(sorted(Personality.personalities)))
+    " " + ', '.join(sorted(BasePersonality.subclasses)))
 
     parser = OptionParser(version="%%prog v%s" % __version__,
         usage="%prog [options] <url> ...", description=descr, epilog=epilog)
@@ -91,15 +91,6 @@ def main():
     #    default=False, help="Remove diacritics for compatibility with readers with " +
     #    "limited fonts and no internal fallback mechanism. (eg. Sony PRS-505)")
 
-    pp_group = OptionGroup(parser, "Post-Processing Options")
-    pp_group.add_option('-p', '--postproc', action="append", dest="postproc", metavar="CMD",
-        default=[], help="Call the specified post-processor after each retrieval " +
-                         "completes. Can be used multiple times. Implies --bundle.")
-    pp_group.add_option('-e', '--final_ext', action="store", dest="final_ext", metavar="EXT",
-        default='.out', help="Set the extension to be used in the output filename " +
-                           "available to post-processor templates.")
-    parser.add_option_group(pp_group)
-
     opts, args = parser.parse_args()
     cmd = parser.get_prog_name()
 
@@ -112,17 +103,20 @@ def main():
                         format='%(levelname)s: %(message)s')
 
     if opts.list_supported:
+        #TODO: Merge this display mechanism into Registerable.
         names = sorted(Scraper.scrapers[x].site_name for x in Scraper.scrapers)
         print "Scrapers:\n\t" + '\n\t'.join(names)
         print
-        print "Personalities:\n\t" + '\n\t'.join(sorted(Personality.personalities))
+        print "Writers:\n\t" + '\n\t'.join(sorted(BaseWriter.subclasses))
+        print
+        print "Personalities:\n\t" + '\n\t'.join(sorted(BasePersonality.subclasses))
         parser.exit()
 
     if not args:
         parser.print_help()
         parser.exit()
 
-    persona = Personality.get(opts.persona or cmd, True)()
+    persona = BasePersonality.get(opts.persona or cmd, True)()
     for option in persona.opts:
         setattr(opts, option, persona.opts[option])
 
@@ -131,8 +125,8 @@ def main():
 
     for url_arg in args:
         # Set up the environment and grab the fic.
-        scraper = Scraper.get(url_arg)(opts.final_ext)
-        writer = Writer.get(opts.writer)
+        scraper = Scraper.get(url_arg)()
+        writer = BaseWriter.get(opts.writer)
         try:
             story = scraper.download_fic(url_arg)
         except Exception, err:
@@ -149,27 +143,6 @@ def main():
         writer.verify_target_dir(fic_target, create=True)
 
         writer.write(story, fic_target)
-
-        #    story.final_path = os.path.join(fic_target,
-        #        '%s.%s' % (self.prepare_filename(story.title), self.final_ext.lstrip('.')))
         persona.postproc(story)
-
-        if opts.postproc:
-            inputs = {
-                'appname'   : "%s v%s" % (__appname__, __version__),
-                'author'    : story.author,
-                'bundle'    : story.path,
-                'category'  : story.category,
-                'coverfile' : story.cover,
-                'outfile'   : story.final_path,
-                'site_name' : story.site_name,
-                'title'     : story.title
-            }
-
-            for pp_cmdline in opts.postproc:
-                cmdlist = pp_cmdline.strip().split()
-                print "Calling post-processor: %s" % cmdlist[0]
-                subprocess.call([r % inputs for r in cmdlist])
-
 if __name__ == '__main__':
 	main()
