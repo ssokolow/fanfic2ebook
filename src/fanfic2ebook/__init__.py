@@ -101,12 +101,13 @@ def main():
                         format='%(levelname)s: %(message)s')
 
     if opts.list_supported:
-        #TODO: Merge this display mechanism into Registerable.
-        print "Scrapers:\n\t" + '\n\t'.join(sorted(x.name for x in Scraper.subclasses.values()))
-        print
-        print "Writers:\n\t" + '\n\t'.join(sorted(BaseWriter.subclasses))
-        print
-        print "Personalities:\n\t" + '\n\t'.join(sorted(BasePersonality.subclasses))
+        for name, cls in (
+                ('Scrapers', Scraper),
+                ('Writers', BaseWriter),
+                ('Personalities', BasePersonality)):
+            #TODO: Merge this display mechanism into Registerable.
+            print name + ":\n\t" + '\n\t'.join(sorted(x.name for x in cls.subclasses.values()))
+            print
         parser.exit()
 
     if not args:
@@ -137,9 +138,7 @@ def main():
             fic_target = os.path.join(target_dir, writer.prepare_filename(story.title))
         writer.verify_target_dir(fic_target, create=True)
 
-        writer.write(story, fic_target)
-
-        #FIXME: I need to tie this to bundle mode again.
-        persona.postproc(story, fic_target)
+        output_path = writer.write(story, fic_target)
+        persona.postproc(story, output_path, fic_target)
 if __name__ == '__main__':
 	main()

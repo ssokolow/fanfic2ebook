@@ -19,7 +19,10 @@ class BaseWriter(Registerable):
         ) #:Characters not allowed in FAT32 filenames.
 
     def write(self, story, path):
-        """Serialize the given C{story} to C{path}."""
+        """Serialize the given C{story} to C{path}.
+
+        @return: The top-level path for the written data or C{None}.
+        """
         raise NotImplementedError("Writing not implemented in this writer.")
 BaseWriter.init_registry()
 
@@ -151,6 +154,8 @@ class HTMLDirWriter(BaseHTMLWriter):
                 log.info("Writing chapter %s to HTML: %s", num, target)
                 outfile.write(html.tostring(self.story_to_dom(story, num),
                     include_meta_content_type=True))
+
+        return path
 HTMLDirWriter.register()
 
 class HTMLFileWriter(BaseHTMLWriter):
@@ -166,6 +171,8 @@ class HTMLFileWriter(BaseHTMLWriter):
             log.info("Generating single-file bundle: %s", target)
             outfile.write(html.tostring(self.story_to_dom(story),
                     include_meta_content_type=True))
+
+        return target
 HTMLFileWriter.register()
 
 #TODO: ================= Finish converting the following ==================
