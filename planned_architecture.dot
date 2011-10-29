@@ -1,0 +1,45 @@
+/* TODO: Figure out how to make the arrows go to the clusters, rather than
+ * their contents. */
+
+digraph G {
+    labelloc=t;
+    node [shape=box];
+
+    subgraph cluster_sources {
+        style=invisible;
+        db [label="Database"];
+        internet [label="Internet"];
+        hdd [label="HDD"];
+    }
+
+    retrieval [label="Retrieval and Caching"];
+    parsing [label="Metadata Extraction\nand Sanitization"];
+
+    subgraph cluster_serialization {
+        label = "Serialization";
+        ser_json [label="JSON",style=dashed];
+        ser_html [label="HTML"];
+        ser_epub [label="ePub",style=dashed];
+    }
+
+    subgraph cluster_conversion {
+        label = "Conversion";
+        conv_etc  [label="...",style=dashed];
+        conv_lrf  [label="LRF/BeBB"];
+        conv_epub [label="ePub"];
+    }
+
+    output [label="Output",style=rounded];
+
+    internet -> retrieval;
+    hdd -> retrieval [dir=both];
+    db -> retrieval [dir=both];
+    retrieval -> parsing [dir=both,label="Spidering"];
+    parsing -> hdd [style=dashed];
+    parsing -> db [style=dashed];
+    parsing -> ser_html;
+    ser_html -> conv_lrf;
+    conv_lrf -> output;
+
+    label="fanfic2ebook: Planned Information Flow";
+}

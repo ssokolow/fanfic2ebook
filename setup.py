@@ -1,5 +1,8 @@
 #!/usr/bin/env python
 """
+@todo: Set up automatic UPXing of extension DLLs via this recipe: http://www.py2exe.org/index.cgi/BetterCompression
+@todo: Look for more modules I can exclude because they're never used: (See http://www.py2exe.org/index.cgi/FAQ)
+@todo: Compare PyInstaller (http://www.pyinstaller.org/) to Py2EXE.
 @todo: Design an icon to be bundled: http://www.py2exe.org/index.cgi/CustomIcons
 @todo: Test against Python 3 and add "Programming Language :: Python :: 3" to the classifiers
 @todo: Decide on a version scheme py2exe is OK with (http://docs.python.org/distutils/setupscript.html#additional-meta-data)

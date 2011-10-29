@@ -93,6 +93,7 @@ class HTTP(object):
         """Flush a page from the retriever's permanent cache.
         @todo: Try to think of a way to make this less necessary given that
                Fanfiction.net returns soft 404 errors for nonexistant pages.
+               ( https://secure.wikimedia.org/wikipedia/en/wiki/HTTP_404 )
         """
         self.db_conn.execute("DELETE FROM %surl_cache WHERE url = ?", [url])
 

@@ -1,0 +1,37 @@
+-- TODO: The url will have to be processed using regular urlprep() and any site-specific normalization like removing the story title from FFnet URLs.
+
+PRAGMA foreign_keys=ON;
+
+-- TODO: Decide how to eventually support multiple versions of a chapter.
+CREATE TABLE IF NOT EXISTS url_cache (
+	id INTEGER PRIMARY KEY NOT NULL,
+	url VARCHAR NOT NULL UNIQUE,
+	timestamp INTEGER NOT NULL,
+        contents TEXT
+);
+CREATE INDEX IF NOT EXISTS idx_url_cache_timestamp ON url_cache (timestamp);
+
+-- TODO: Decide on where to put my constraints.
+-- TODO: Decide how to eventually support multiple locations for a chapter.
+CREATE TABLE IF NOT EXISTS chapter_meta (
+	id INTEGER PRIMARY KEY NOT NULL,
+	story_id INTEGER NOT NULL REFERENCES story_meta (id),
+	cache_id INTEGER NOT NULL REFERENCES url_cache (id),
+	number INTEGER NOT NULL CHECK(chapter_num > 0),
+	title VARCHAR
+	-- TODO: Finish adding fields
+);
+CREATE UNIQUE INDEX IF NOT EXISTS idx_chapter_cache_id ON chapter_meta (
+	cache_id);
+CREATE UNIQUE INDEX IF NOT EXISTS idx_chapter_story_num ON chapter_meta (
+	story_id, 
+	number
+);
+
+CREATE TABLE IF NOT EXISTS story_meta (
+	id INTEGER PRIMARY KEY NOT NULL,
+	title VARCHAR,
+	author VARCHAR
+	-- TODO: Finish adding fields
+);
+CREATE INDEX IF NOT EXISTS idx_story_meta_title ON story_meta (title);
