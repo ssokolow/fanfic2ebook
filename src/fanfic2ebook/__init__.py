@@ -64,7 +64,7 @@ if os.name == 'nt':
         def get_argv():
             return winui.getLines(
                 "Enter/Paste URL of fanfic to download:",
-                lambda: winui.getClipboardText().strip())
+                lambda: winui.getClipboardText().encode('mbcs').strip())
     except ImportError:
         pass
 
@@ -125,7 +125,7 @@ def main():
     # Provide a dialog for Windows users
     # (Note: Doesn't provide a graphical crash handler yet)
     if not args and os.name == 'nt':
-        get_argv()
+        args = get_argv()
 
     if not args:
         parser.print_help()

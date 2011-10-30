@@ -176,7 +176,6 @@ class FFNetScraper(Scraper):
         return "http://www.fanfiction.net/s/%s/%s/" % (fic_id, instr)
     def story_title_selector(self, dom):
         """Extract the story title from the Fanfiction.net <title> element."""
-        print str(self._title_xp(dom))
         return [self.story_title_re.match(str(self._title_xp(dom)[0])).group('title')]
     def get_story_categories(self, dom):
         """Retrieve the category into which the story falls."""

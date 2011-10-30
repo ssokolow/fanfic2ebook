@@ -91,7 +91,7 @@ if __name__ == '__main__':
     # Test getLines
     inStr = getLines(
         "It doesn't look it, but you can paste multi-line text:",
-        lambda:getClipboardText().strip())
+        lambda:getClipboardText().encode('mbcs').strip())
     if inStr:
         print "Received Lines:\n\t%s" % '\n\t'.join(inStr)
     else:
