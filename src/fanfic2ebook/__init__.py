@@ -54,9 +54,6 @@ from retrieval import HTTP
 from scrapers import Scraper
 from writers import BaseWriter, HTMLFileWriter
 
-# Set the User-Agent string
-HTTP.set_base_UA('%s/%s +%s' % (__appname__, __version__, __siteurl__))
-
 get_argv = lambda: []
 if os.name == 'nt':
     try:
@@ -158,4 +155,7 @@ def main():
         output_path = writer.write(story, fic_target)
         persona.postproc(story, output_path, fic_target)
 if __name__ == '__main__':
-	main()
+    # Set the User-Agent string
+    HTTP.set_base_UA('%s/%s +%s' % (__appname__, __version__, __siteurl__))
+
+    main()
