@@ -11,6 +11,7 @@
  - Make this code more robust (it makes many assumptions about cached data and input)
  - Consider adding ETags and If-Modified-Since support to the urllib2 fallback.
  - Check out the sites listed at http://www.ficsavers.com/index.cgi?action=list
+ - See if this is immediately relevant: http://lxml.de/xpathxslt.html#regular-expressions-in-xpath
 """
 
 import logging
@@ -43,6 +44,7 @@ BaseScraper.init_registry(key_getter=lambda x: x.story_url_re,
 
 #TODO: I need to write some unit tests for this which catch grabbing pages twice.
 class Scraper(BaseScraper):
+    #TODO: Work to make these names as consistent as possible
     story_title_selector     = None #: Used by L{acquire_chapter}
     chapter_list_selector    = None #: Used by L{acquire_chapter} to find the chapter list.
     chapter_title_selector   = None
@@ -174,9 +176,13 @@ class FFNetScraper(Scraper):
         """Generate a Fanfiction.net chapter URL from the chapter number."""
         fic_id = urlparse.urlparse(base_url).path.split('/', 4)[2]
         return "http://www.fanfiction.net/s/%s/%s/" % (fic_id, instr)
+
+    #TODO: Replace this with a selector chain
     def story_title_selector(self, dom):
         """Extract the story title from the Fanfiction.net <title> element."""
         return [self.story_title_re.match(str(self._title_xp(dom)[0])).group('title')]
+
+    #TODO: Replace this with a selector chain
     def get_story_categories(self, dom):
         """Retrieve the category into which the story falls."""
         #TODO: Handle crossovers properly

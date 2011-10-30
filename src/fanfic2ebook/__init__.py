@@ -16,7 +16,18 @@ Features:
 @note: There's no inherent design trait limiting this to fanfiction.
     It's basically a generic downloader for serial web-published fiction.
 
+@todo: Quick and/or Urgent TODOs:
+ - Rework logging so the py2exe build doesn't claim errors on log.warn().
+ - Move the URL normalizer into this and hook it up. Let FFCMS depend on it.
+ - Track down why DEBUG messages seem to indicate the scraping is happening
+   twice and multi-file fics like http://www.fanfiction.net/s/6557238/35/
+   are populating the chapters list twice.
+
 @todo:
+ - Decide how to enable bundling in EXE mode.
+ - Identify utf8-latin1 encoding mess-ups remaining post-decode by detecting
+   characteristic substrings like Ã© = é. (Stuff where the browser mis-displays
+   it too. I think there's an example in "Gene-Spliced Harry" if I need one)
  - Support custom path generation and a config file so I can automatically
    save to "~/Documents/Fanfiction/<series>/<story>/<story> - <chapter>.html"
  - I suspect it's not an encoding issue but a font issue that keeps certain
