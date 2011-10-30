@@ -30,6 +30,7 @@ Source Dependencies: (Will be included in .exe bundles)
 - Python_ 2.x (I forget which version but anything installed by default should do)
 - LXML_
 - httplib2_ (Optional but recommended. Provides HTTP caching and compression.)
+- EasyDialogs_ (Windows users only. Optional. Required for minimal GUI.)
 
 Runtime Dependencies: (Not included in .exe bundles)
 
@@ -59,5 +60,6 @@ When reporting problems, please provide the following information:
 .. _Python: http://python.org/download/
 .. _LXML: http://lxml.de/installation.html
 .. _httplib2: https://code.google.com/p/httplib2/
+.. _EasyDialogs: http://www.averdevelopment.com/python/EasyDialogs.html
 .. _MSVCR90.dll: http://www.microsoft.com/downloads/en/details.aspx?FamilyID=9b2da534-3e03-4391-8a4d-074b9f2bc1bf&displaylang=en
 .. _calibre: http://calibre-ebook.com/
