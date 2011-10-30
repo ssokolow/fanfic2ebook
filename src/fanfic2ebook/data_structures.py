@@ -86,7 +86,7 @@ class Story(object):
             pos = int(obj.number)
 
             if pos in self._chapters:
-                log.warn("Overwriting existing chapter %d" % pos)
+                log.debug("Sub-optimal behaviour: overwriting existing chapter %d in Story.chapters list" % pos)
 
             self._chapters[pos] = obj
 
