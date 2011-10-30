@@ -2,4 +2,6 @@
 *.py[co]
 build/
 dist/
+sources/
+unsorted/
 MANIFEST

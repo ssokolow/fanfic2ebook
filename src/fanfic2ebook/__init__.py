@@ -57,6 +57,17 @@ from writers import BaseWriter, HTMLFileWriter
 # Set the User-Agent string
 HTTP.set_base_UA('%s/%s +%s' % (__appname__, __version__, __siteurl__))
 
+get_argv = lambda: []
+if os.name == 'nt':
+    try:
+        import winui
+        def get_argv():
+            return winui.getLines(
+                "Enter/Paste URL of fanfic to download:",
+                lambda: winui.getClipboardText().strip())
+    except ImportError:
+        pass
+
 def main():
     from optparse import OptionParser
 
@@ -110,6 +121,11 @@ def main():
             print name + ":\n\t" + '\n\t'.join(sorted(x.name for x in cls.subclasses.values()))
             print
         parser.exit()
+
+    # Provide a dialog for Windows users
+    # (Note: Doesn't provide a graphical crash handler yet)
+    if not args and os.name == 'nt':
+        get_argv()
 
     if not args:
         parser.print_help()
