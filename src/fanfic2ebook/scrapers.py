@@ -102,6 +102,7 @@ class Scraper(BaseScraper):
         for selector in self.unwanted_elements:
             [x.getparent().remove(x) for x in selector(chapter_content)]
 
+        #FIXME: Once content processing is done, IDs need to be stripped.
         cleaned = self.custom_content_cleaning(chapter_content)
         if cleaned is not None:
             chapter_content = cleaned

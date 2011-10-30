@@ -52,6 +52,9 @@ class BaseHTMLWriter(BaseWriter):
 
         @return: An lxml DOM.
         @rtype: C{lxml.html.HtmlElement}
+
+        @todo: Now that I'm using this HTML as more than just an eBook
+               intermediary, I need to style it up elegantly.
         """
         #Build the body's header
         body = E.BODY(
@@ -153,7 +156,8 @@ class HTMLDirWriter(BaseHTMLWriter):
             with open(target, 'w') as outfile:
                 log.info("Writing chapter %s to HTML: %s", num, target)
                 outfile.write(html.tostring(self.story_to_dom(story, num),
-                    include_meta_content_type=True))
+                    include_meta_content_type=True,
+                    pretty_print=True))
 
         return path
 HTMLDirWriter.register()
@@ -170,7 +174,8 @@ class HTMLFileWriter(BaseHTMLWriter):
         with open(target, 'w') as outfile:
             log.info("Generating single-file bundle: %s", target)
             outfile.write(html.tostring(self.story_to_dom(story),
-                    include_meta_content_type=True))
+                    include_meta_content_type=True,
+                    pretty_print=True))
 
         return target
 HTMLFileWriter.register()
@@ -226,6 +231,8 @@ class Chapter(object):
     meta_mappings = {
             'DC.identifier' : 'chapter_url',
     } #: @todo: Implement
+    #TODO: The integration script should recognize fanfic2ebook output and use
+    #      the stored original source URLs for cites.
 
     @staticmethod
     def from_html(html_in):
