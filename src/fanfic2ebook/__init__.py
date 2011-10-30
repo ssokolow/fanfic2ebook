@@ -173,7 +173,6 @@ def main():
             fic_target = target_dir
         else:
             fic_target = os.path.join(target_dir, target_name)
-        writer.verify_target_dir(fic_target, create=True)
 
         output_path = writer.write(story, fic_target)
         persona.postproc(story, output_path, fic_target)

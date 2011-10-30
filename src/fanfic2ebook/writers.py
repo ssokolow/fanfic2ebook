@@ -143,6 +143,8 @@ class HTMLDirWriter(BaseHTMLWriter):
         self.overwrite = overwrite
 
     def write(self, story, path):
+        self.verify_target_dir(path, create=True)
+
         for num in story.chapters:
             #TODO: Ponder zero-padding the name here.
             target = os.path.join(path, "%s - %s.html" % (
@@ -169,6 +171,8 @@ class HTMLFileWriter(BaseHTMLWriter):
 
     def write(self, story, path):
         """Serialize the given C{story} to C{path}."""
+        self.verify_target_dir(path, create=True)
+
         target = os.path.join(path,
             '%s.html' % self.prepare_filename(story.title))
 
