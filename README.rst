@@ -19,7 +19,8 @@ Basic usage:
 
 See the output of ``--help`` for usage instructions.
 
-Windows .exe bundles are **NOT** installers. They are ready-to-run tools which need no installation and should be run via ``cmd.exe``.
+Windows users may double-click the ready-made .EXE versions for a minimal GUI
+which pre-populates its input from the clipboard.
 
 Dependencies
 ------------
@@ -33,8 +34,9 @@ Source Dependencies: (Will be included in .exe bundles)
 Runtime Dependencies: (Not included in .exe bundles)
 
 - MSVCR90.dll_ (Windows .exe bundles only. Normally included with Python_ and often already present on your system.)
-- calibre_ (Optional. Only required for automatic conversion to non-HTML
-  formats. Support may currently be broken.)
+- calibre_ (Optional. Only required for automatic conversion to non-HTML formats.)
+
+Tested successfully on Linux and Windows XP.
 
 Reporting Bugs
 --------------
