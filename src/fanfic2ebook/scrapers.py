@@ -41,10 +41,11 @@ class BaseScraper(Registerable):
 BaseScraper.init_registry(key_getter=lambda x: x.story_url_re,
         key_matcher=regex_key_matcher)
 
-#TODO: Switch to using Registerable's implementation.
+#TODO: I need to write some unit tests for this which catch grabbing pages twice.
 class Scraper(BaseScraper):
     story_title_selector     = None #: Used by L{acquire_chapter}
-    chapter_select_selector  = None #: Used by L{acquire_chapter} to find the chapter list.
+    chapter_list_selector    = None #: Used by L{acquire_chapter} to find the chapter list.
+    chapter_title_selector   = None
     chapter_content_selector = None #: Used by L{acquire_chapter} to find the chapter content.
     author_url_fragment      = None #: Used by L{acquire_chapter} to find the author's name.
     not_chapters             = ["story index", "table of contents"] #: Must be lowercase.
@@ -78,25 +79,22 @@ class Scraper(BaseScraper):
         dom = self.http.get_dom(url)
         html.make_links_absolute(dom, copy=False)
 
-        #TODO: I might as well match against the individual entries and not use [0] now.
-        chapter_select  = self.chapter_select_selector(dom)[0]
-
         #TODO: Need some error handling here
         chapter_content = self.chapter_content_selector(dom)[0]
+        chapter_nodes  = self.chapter_list_selector(dom)
 
         if not story:
+            #TODO: Compact this into one line using either XPath regexes or a substring match.
             author = ''
             for elem in dom.iterfind('.//a[@href]'):
                 if self.author_url_fragment in elem.get('href'):
                     author = elem.text
                     break
-            story = Story(self.get_story_title(dom), author)
+            story = Story(str(self.story_title_selector(dom)[0]), author)
             story.publisher = self.name
             story.categories  = self.get_story_categories(dom)
-            if chapter_select is not None:
-                options = chapter_select.findall(".//option")
-                if options[0].text.strip().lower() in self.not_chapters:
-                    options = options[1:]
+            if len(chapter_nodes):
+                options = [x for x in chapter_nodes if x.text.strip().lower() not in self.not_chapters]
                 story.chapter_urls = [self.resolve_chapter_url(x.get('value'), url, dom) for x in options]
             else:
                 story.chapter_urls = [url]
@@ -109,9 +107,9 @@ class Scraper(BaseScraper):
             chapter_content = cleaned
 
         # Extract metadata from the chapter selector (or recognize its absence)
-        if chapter_select is not None:
-            chapter_title_str = chapter_select.find(".//option[@selected]").text
-            chapter_title_obj = self.chapter_title_re.match(chapter_title_str)
+        chapter_title_str = self.chapter_title_selector(dom)
+        if chapter_title_str:
+            chapter_title_obj = self.chapter_title_re.match(chapter_title_str[0])
 
             chapter_title  = chapter_title_obj.group('name')
             chapter_number = int(chapter_title_obj.group('num'))
@@ -144,15 +142,6 @@ class Scraper(BaseScraper):
 
         return story
 
-    #TODO: Ditch this and just accept a callback for story_title_selector.
-    def get_story_title(self, dom):
-        """Override to extract the story title."""
-        if self.story_title_selector:
-            #TODO: Decide on a less side-effect-based way to fail safe.
-            return str(XPath('.//h3/*[last()]/text()')(dom)[0])
-        else:
-            raise NotImplementedError("Set story_title_selector or override this")
-
     def resolve_chapter_url(self, instr, base_url, dom):
         """Override this if the values of the chapter <option>s are neither
            relative nor absolute URLs."""
@@ -170,10 +159,12 @@ class FFNetScraper(Scraper):
     story_url_re     = re.compile(r"http://www.fanfiction.net/s/\d+/\d+/.*")
 
     chapter_content_selector = CSS('.storytext')
-    chapter_select_selector  = XPath(".//*[@name='chapter']")
-    author_url_fragment   = '/u/'
-    unwanted_elements     = [CSS('.a2a_kit')]
-    story_title_re        = re.compile(r"^(?P<title>.+?)(,? Chapter "
+    chapter_list_selector    = XPath(".//*[@name='chapter']//option")
+    chapter_title_selector   = XPath(".//*[@name='chapter']//option[@selected]/text()")
+    unwanted_elements        = [CSS('.a2a_kit')]
+    author_url_fragment      = '/u/'
+    _title_xp                = XPath('.//title/text()')
+    story_title_re           = re.compile(r"^(?P<title>.+?)(,? Chapter "
         "(?P<chapter>.+?))?, an? (?P<category>.+?)( crossover)? fanfic - " +
         "FanFiction.Net$", re.IGNORECASE ) #: Used to extract the story's title and fandom from <title>
     #TODO: Not always reliable. I need to try to prefer the embedded 'var' versions.
@@ -182,13 +173,14 @@ class FFNetScraper(Scraper):
         """Generate a Fanfiction.net chapter URL from the chapter number."""
         fic_id = urlparse.urlparse(base_url).path.split('/', 4)[2]
         return "http://www.fanfiction.net/s/%s/%s/" % (fic_id, instr)
-    def get_story_title(self, dom):
+    def story_title_selector(self, dom):
         """Extract the story title from the Fanfiction.net <title> element."""
-        return self.story_title_re.match(dom.find('.//title').text).group('title')
+        print str(self._title_xp(dom))
+        return [self.story_title_re.match(str(self._title_xp(dom)[0])).group('title')]
     def get_story_categories(self, dom):
         """Retrieve the category into which the story falls."""
         #TODO: Handle crossovers properly
-        return [self.story_title_re.match(dom.find('.//title').text).group('category')]
+        return [self.story_title_re.match(str(self._title_xp(dom)[0])).group('category')]
 FFNetScraper.register()
 
 class TtHScraper(Scraper):
@@ -198,7 +190,8 @@ class TtHScraper(Scraper):
 
     story_title_selector     = XPath(".//h2/text()")
     chapter_content_selector = XPath(".//a[@name='storybody']/..")
-    chapter_select_selector  = CSS("select#chapnav")
+    chapter_list_selector    = XPath(".//select[@id='chapnav']//option")
+    chapter_title_selector   = XPath(".//select[@id='chapnav']//option[@selected]/text()")
     unwanted_elements        = [CSS('h3')]
     author_url_fragment      = '/AuthorStories-'
 TtHScraper.register()
@@ -211,7 +204,8 @@ class FicWadScraper(Scraper):
     story_url_re     = re.compile(r"http://www.ficwad.com/story/\d+")
 
     story_title_selector     = XPath('.//h3/*[last()]/text()')
-    chapter_select_selector  = XPath(".//select[@name='goto']")
+    chapter_list_selector    = XPath(".//select[@name='goto']//option")
+    chapter_title_selector   = XPath(".//select[@name='goto']//option[@selected]/text()")
     chapter_content_selector = CSS('#storytext')
     author_url_fragment      = '/author/'
 
