@@ -54,7 +54,7 @@ __version__ = "0.1pre3"
 __siteurl__ = "http://github.com/ssokolow/fanfic2ebook/tree/master"
 
 # stdlib imports
-import os
+import imp, os, sys
 
 import logging
 log = logging.getLogger(__name__)
@@ -75,6 +75,11 @@ if os.name == 'nt':
                 lambda: winui.getClipboardText().encode('mbcs').strip())
     except ImportError:
         pass
+
+def main_is_frozen():
+    return (hasattr(sys, "frozen") or # new py2exe
+            hasattr(sys, "importers") # old py2exe
+            or imp.is_frozen("__main__")) # tools/freeze
 
 def main():
     from optparse import OptionParser
@@ -100,7 +105,7 @@ def main():
     parser.add_option('-P', '--personality', action="store", dest="persona", metavar="NAME",
         default=None, help="Set the personality the conversion will operate under. See --list_supported.")
     parser.add_option('-v', '--verbose', action="count", dest="verbose",
-        default=2, help="Increase the verbosity. Can be used twice for extra effect.")
+        default=3, help="Increase the verbosity. Can be used twice for extra effect.")
     parser.add_option('-q', '--quiet', action="count", dest="quiet",
         default=0, help="Decrease the verbosity. Can be used twice for extra effect.")
 
@@ -112,7 +117,13 @@ def main():
     opts, args = parser.parse_args()
     cmd = parser.get_prog_name()
 
+    # If we're running via py2exe, drop back from logging.INFO to
+    # logging.WARNING to prevent erroneous messages.
+    if os.name == 'nt' and main_is_frozen():
+        opts.verbose -= 1
+
     # Set up clean logging to stderr
+    # FIXME: This should be locked to logging.WARNING if py2exe-built.
     log_levels = [logging.CRITICAL, logging.ERROR, logging.WARNING,
                   logging.INFO, logging.DEBUG]
     opts.verbose = min(opts.verbose - opts.quiet, len(log_levels) - 1)
