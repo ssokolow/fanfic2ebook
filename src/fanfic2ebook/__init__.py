@@ -52,7 +52,7 @@ log = logging.getLogger(__name__)
 from personalities import BasePersonality
 from retrieval import HTTP
 from scrapers import Scraper
-from writers import BaseWriter
+from writers import BaseWriter, HTMLFileWriter
 
 # Set the User-Agent string
 HTTP.set_base_UA('%s/%s +%s' % (__appname__, __version__, __siteurl__))
@@ -71,8 +71,9 @@ def main():
     parser = OptionParser(version="%%prog v%s" % __version__,
         usage="%prog [options] <url> ...", description=descr, epilog=epilog)
     parser.add_option('-b', '--bundle', action="store_const", dest="writer",
-        default='htmldir', const='htmlfile', help="Also bundle the entire "
-        "story into a single file with chapter headings and a table of contents.")
+        default='htmldir', const=HTMLFileWriter.name, help="Also bundle the "
+        "entire story into a single file with chapter headings and a table "
+        "of contents.")
     parser.add_option('-t', '--target', action="store", dest="target", metavar="DIR",
         default=os.getcwd(), help="Specify a target directory other than the current working directory.")
     parser.add_option('--list-supported', action="store_true", dest="list_supported",
