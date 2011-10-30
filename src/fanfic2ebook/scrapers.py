@@ -45,11 +45,11 @@ BaseScraper.init_registry(key_getter=lambda x: x.story_url_re,
 #TODO: I need to write some unit tests for this which catch grabbing pages twice.
 class Scraper(BaseScraper):
     #TODO: Work to make these names as consistent as possible
+    author_name_selector     = None #: Used by L{acquire_chapter} to find the author's name.
     story_title_selector     = None #: Used by L{acquire_chapter}
-    chapter_list_selector    = None #: Used by L{acquire_chapter} to find the chapter list.
+    chapter_nodes_selector    = None #: Used by L{acquire_chapter} to find the chapter list.
     chapter_title_selector   = None
     chapter_content_selector = None #: Used by L{acquire_chapter} to find the chapter content.
-    author_url_fragment      = None #: Used by L{acquire_chapter} to find the author's name.
     not_chapters             = ["story index", "table of contents"] #: Must be lowercase.
     unwanted_elements        = []   #: Set to a list of CSS or XPath selectors to remove things.
 
@@ -57,6 +57,26 @@ class Scraper(BaseScraper):
         ) #: Common to Fanfiction.net, FicWad, and TtH <select> elements.
     def __init__(self, retriever=HTTP):
         self.http = retriever()
+
+    def _first_str(self, dom, selectors):
+        """Take a selector or selector chain and return a stripped string."""
+        if not isinstance(selectors, (list, tuple)):
+            selectors = [selectors]
+
+        for stage in selectors:
+            #TODO: Make this regex-compatible
+            results = stage(dom)
+            if isinstance(results, list):
+                dom = results[0]
+            elif results:
+                dom = results
+            else:
+                log.debug("Match failed: %s(%s) in %s", stage, dom, self.name)
+                return None
+
+        #TODO: Decide on a consistent plan for how to handle chained selectors
+        #      (return types, conversion to str(), etc.)
+        return str(dom.strip())
 
     def acquire_chapter(self, url, story=None):
         """Download and scrape a single chapter from a story.
@@ -83,16 +103,15 @@ class Scraper(BaseScraper):
 
         #TODO: Need some error handling here
         chapter_content = self.chapter_content_selector(dom)[0]
-        chapter_nodes  = self.chapter_list_selector(dom)
+        chapter_nodes  = self.chapter_nodes_selector(dom)
 
         if not story:
-            #TODO: Compact this into one line using either XPath regexes or a substring match.
-            author = ''
-            for elem in dom.iterfind('.//a[@href]'):
-                if self.author_url_fragment in elem.get('href'):
-                    author = elem.text
-                    break
-            story = Story(str(self.story_title_selector(dom)[0]), author)
+            #TODO: Need to decide where, in a loosely-coupled stack, selector
+            #      failure should be checked (given that different apps may
+            #      have different standards) and how to react to it.
+            story = Story(
+                    title  = self._first_str(dom, self.story_title_selector),
+                    author = self._first_str(dom, self.author_name_selector))
             story.publisher = self.name
             story.categories  = self.get_story_categories(dom)
             if len(chapter_nodes):
@@ -161,11 +180,11 @@ class FFNetScraper(Scraper):
     name             = "Fanfiction.net"
     story_url_re     = re.compile(r"http://www.fanfiction.net/s/\d+/\d+/.*")
 
+    author_name_selector     = XPath(".//a[contains(@href, '/u/')]/text()")
     chapter_content_selector = CSS('.storytext')
-    chapter_list_selector    = XPath(".//*[@name='chapter']//option")
+    chapter_nodes_selector   = XPath(".//*[@name='chapter']//option")
     chapter_title_selector   = XPath(".//*[@name='chapter']//option[@selected]/text()")
     unwanted_elements        = [CSS('.a2a_kit')]
-    author_url_fragment      = '/u/'
     _title_xp                = XPath('.//title/text()')
     story_title_re           = re.compile(r"^(?P<title>.+?)(,? Chapter "
         "(?P<chapter>.+?))?, an? (?P<category>.+?)( crossover)? fanfic - " +
@@ -195,11 +214,11 @@ class TtHScraper(Scraper):
     story_url_re     = re.compile(r"http://www.tthfanfic.org/(Story-\d+(-\d+)?(/.*)?|story.php\?no=\d+)")
 
     story_title_selector     = XPath(".//h2/text()")
+    author_name_selector     = XPath(".//a[contains(@href, '/AuthorStories')]/text()")
     chapter_content_selector = XPath(".//a[@name='storybody']/..")
-    chapter_list_selector    = XPath(".//select[@id='chapnav']//option")
+    chapter_nodes_selector   = XPath(".//select[@id='chapnav']//option")
     chapter_title_selector   = XPath(".//select[@id='chapnav']//option[@selected]/text()")
     unwanted_elements        = [CSS('h3')]
-    author_url_fragment      = '/AuthorStories-'
 TtHScraper.register()
 
 class FicWadScraper(Scraper):
@@ -210,9 +229,9 @@ class FicWadScraper(Scraper):
     story_url_re     = re.compile(r"http://www.ficwad.com/story/\d+")
 
     story_title_selector     = XPath('.//h3/*[last()]/text()')
-    chapter_list_selector    = XPath(".//select[@name='goto']//option")
+    author_name_selector     = XPath(".//a[contains(@href, '/author/')]/text()")
+    chapter_nodes_selector   = XPath(".//select[@name='goto']//option")
     chapter_title_selector   = XPath(".//select[@name='goto']//option[@selected]/text()")
     chapter_content_selector = CSS('#storytext')
-    author_url_fragment      = '/author/'
 
 FicWadScraper.register()
