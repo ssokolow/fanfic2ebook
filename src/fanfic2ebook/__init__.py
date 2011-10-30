@@ -168,10 +168,11 @@ def main():
 
         # Create the "Story Title" folder but don't nest identical folders.
         target_dir = os.path.abspath(opts.target or os.getcwd())
-        if os.path.basename(target_dir).strip().lower() == story.title.strip().lower():
+        target_name = writer.prepare_filename(story.title)
+        if os.path.basename(target_dir).lower() == target_name.lower():
             fic_target = target_dir
         else:
-            fic_target = os.path.join(target_dir, writer.prepare_filename(story.title))
+            fic_target = os.path.join(target_dir, target_name)
         writer.verify_target_dir(fic_target, create=True)
 
         output_path = writer.write(story, fic_target)

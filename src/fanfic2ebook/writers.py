@@ -96,7 +96,8 @@ class BaseHTMLWriter(BaseWriter):
 
         @return: The sanitized string.
         @rtype: str|unicode"""
-        return self.fat32_compatibility_re.sub('_', in_str)
+        fname = self.fat32_compatibility_re.sub('_', in_str)
+        return fname.rstrip('.').strip()
 
     def verify_target_dir(self, target=None, create=False):
         """Check the given path to ensure it's suitable for saving stories.
