@@ -17,14 +17,34 @@ Features:
     It's basically a generic downloader for serial web-published fiction.
 
 @todo: Quick and/or Urgent TODOs:
- - Rework logging so the py2exe build doesn't claim errors on log.warn().
- - Move the URL normalizer into this and hook it up. Let FFCMS depend on it.
+ - The retrieval code needs an API for checking whether a request will be
+   served from the permanent cache.
+ - Switch scraping to being generator-based so the writer doesn't have to batch
+   up the "chapter written" messages after all the network I/O is finished.
+   (But make sure to document that all story-scoped retrievals must be done
+   before yielding the first chapter because the writer is likely to use story-
+   scoped data and write to disk immediately.)
+ - Adjust version numbering to work with py2exe and cook up a quick placeholder
+   icon.
+ - Add a word count field that can be set or calculated on demand from content.
  - Track down why DEBUG messages seem to indicate the scraping is happening
    twice and multi-file fics like http://www.fanfiction.net/s/6557238/35/
    are populating the chapters list twice.
+ - Move the URL normalizer into this and hook it up. Let FFCMS depend on it.
+ - Move all the import-requiring stuff in this file into a submodule that's
+   only imported if __name__ == '__main__' to make things more efficient if a
+   project only wants to reuse part of this.
+ - Verify that Calibré integration works on Windows if you add it to the PATH
+   and then explain that in the README.
+ - Verify that the wiki page is up to date.
 
 @todo:
  - Decide how to enable bundling in EXE mode.
+ - Split the cache backend out from the retriever and explore the
+   space-efficiency (both py2exe and data store size) and performance of
+   using Dulwich to provide a git-based, multi-versioned backend to the
+   permanent cache. (Assuming you flush content enough that filter-branch
+   is an acceptable way to do it)
  - Identify utf8-latin1 encoding mess-ups remaining post-decode by detecting
    characteristic substrings like Ã© = é. (Stuff where the browser mis-displays
    it too. I think there's an example in "Gene-Spliced Harry" if I need one)
@@ -43,6 +63,8 @@ Features:
    (eg. passing arbitrary flags to html2lrf)
  - Test latest Calibré to see if the </p> and accent handling in html2lrf are fixed.
    (If not, file a bug report and share the code I used to work around the problem)
+ - Explore this as a possible avenue for a generic fallback:
+   http://ai-depot.com/articles/the-easy-way-to-extract-useful-text-from-arbitrary-html/
 
 @newfield appname: Application Name
 """
