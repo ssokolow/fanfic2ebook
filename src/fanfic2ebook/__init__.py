@@ -104,6 +104,10 @@ def main():
         default=False, help="List installed scrapers and personalities.")
     parser.add_option('-P', '--personality', action="store", dest="persona", metavar="NAME",
         default=None, help="Set the personality the conversion will operate under. See --list_supported.")
+    parser.add_option('--scraper', action="store", dest="scraper", metavar="URL",
+        default=None, help="Force the selected scraper to be used regardless "
+        "of the URLs given. (Useful for processing files archives through "
+        "other means)")
     parser.add_option('-v', '--verbose', action="count", dest="verbose",
         default=3, help="Increase the verbosity. Can be used twice for extra effect.")
     parser.add_option('-q', '--quiet', action="count", dest="quiet",
@@ -156,7 +160,7 @@ def main():
 
     for url_arg in args:
         # Set up the environment and grab the fic.
-        scraper = Scraper.get(url_arg)()
+        scraper = Scraper.get(opts.scraper or url_arg)()
         writer = BaseWriter.get(opts.writer)()
         try:
             story = scraper.download_fic(url_arg)
