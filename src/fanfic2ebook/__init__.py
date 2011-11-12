@@ -17,6 +17,8 @@ Features:
     It's basically a generic downloader for serial web-published fiction.
 
 @todo: Quick and/or Urgent TODOs:
+ - Use my permanent-cache copy of http://www.fanfiction.net/s/7454433/3/ to
+   figure out a more reliable way to scrape the story title from FFnet.
  - The retrieval code needs an API for checking whether a request will be
    served from the permanent cache.
  - Switch scraping to being generator-based so the writer doesn't have to batch
@@ -24,6 +26,9 @@ Features:
    (But make sure to document that all story-scoped retrievals must be done
    before yielding the first chapter because the writer is likely to use story-
    scoped data and write to disk immediately.)
+ - Use try/except and try/finally guards to ensure that Ctrl+C can't leave
+   half-written chapters which will then get skipped as if they are full
+   chapters.
  - Adjust version numbering to work with py2exe and cook up a quick placeholder
    icon.
  - Add a word count field that can be set or calculated on demand from content.
@@ -39,7 +44,10 @@ Features:
  - Verify that the wiki page is up to date.
 
 @todo:
+ - Support taking an FFnet author page and grabbing every fic on it.
  - Decide how to enable bundling in EXE mode.
+ - Use cProfile to optimize the scraper system so it doesn't take 5 seconds to
+   process a 50 chapter fic from the permanent cache.
  - Split the cache backend out from the retriever and explore the
    space-efficiency (both py2exe and data store size) and performance of
    using Dulwich to provide a git-based, multi-versioned backend to the
