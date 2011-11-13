@@ -145,6 +145,7 @@ class HTTP(BaseRetrieval):
                separate.)
         """
         super(HTTP, self).__init__(cache)
+        self.cache_root = get_cache_root()
 
         try:
             import httplib2
@@ -169,8 +170,11 @@ class HTTP(BaseRetrieval):
         @todo: Figure out how to return a consistent object API so this can
                doesn't have to return a pre-parsed DOM.
         """
-        dom = self.cache.get(base_url) or self.cache.get(url) or None
-        if not dom:
+        dom = self.cache.get(base_url)
+        if dom is None:
+            dom = self.cache.get(url)
+
+        if dom is None:
             if self.with_httplib2:
                 log.debug("Retrieving URL using httplib2: %s", url)
                 resp, content = self.http.request(url, "GET",
@@ -186,7 +190,7 @@ class HTTP(BaseRetrieval):
                 log.debug("Retrieving URL using urllib2: %s", url)
                 dom = html.parse(self.opener.open(url)).getroot()
 
-            self.cache.set(url, time.time(), html.tostring(dom, encoding=unicode))
+            self.cache.add(url, time.time(), html.tostring(dom, encoding=unicode))
         return dom
 
 #TODO: Hook in a cURL-like command-line UI that's at least useful for priming the cache.
