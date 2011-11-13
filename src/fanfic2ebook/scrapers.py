@@ -78,7 +78,7 @@ class Scraper(BaseScraper):
         #      (return types, conversion to str(), etc.)
         return str(dom.strip())
 
-    def acquire_chapter(self, url, story=None):
+    def acquire_chapter(self, url, story=None, base_url=None):
         """Download and scrape a single chapter from a story.
         @param url: The URL of the chapter to download.
         @param story: The Story object provided by a previous run.
@@ -90,8 +90,11 @@ class Scraper(BaseScraper):
             as an argument.
         @rtype: L{Chapter}
         """
+
         # Verify the URL's syntactical validity before wasting bandwidth.
-        if not self.story_url_re.match(url):
+        # TODO: I may want to just trust the lookup to do this.
+        #       (I'm getting a gut feeling that base_url will prove a kludge)
+        if not self.story_url_re.match(base_url or url):
             log.error("Not a %s story URL: %s", self.name, url)
             return None
 
@@ -145,7 +148,7 @@ class Scraper(BaseScraper):
 
     #TODO: Instead of writing to disk, yield Chapter objects one-by-one
     # since, being already I/O-bound, we might as well be memory-efficient too.
-    def download_fic(self, url):
+    def download_fic(self, url, base_url=None):
         """Download and save an entire story as a set of cleaned HTML files.
 
         @param url: The URL of any chapter in the story.
@@ -155,7 +158,7 @@ class Scraper(BaseScraper):
         @rtype: L{Story}
         """
         # Prime the story-wide metadata store to get the chapter count
-        story = self.acquire_chapter(url).story
+        story = self.acquire_chapter(url, base_url=base_url).story
 
         for pos, chapter_url in enumerate(story.chapter_urls):
             if not pos + 1 in story.chapters:

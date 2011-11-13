@@ -91,7 +91,7 @@ log = logging.getLogger(__name__)
 
 # Local imports
 from personalities import BasePersonality
-from retrieval import HTTP
+from retrieval import HTTP, LocalRetrieval
 from scrapers import Scraper
 from writers import BaseWriter, HTMLFileWriter
 
@@ -189,12 +189,25 @@ def main():
         setattr(opts, option, persona.opts[option])
 
     for url_arg in args:
+        if url_arg.lower().startswith('http://') or url_arg.lower().startswith('https://'):
+            retriever = HTTP
+        elif url_arg.lower().startswith('file://') or os.path.isfile(url_arg):
+            retriever = LocalRetrieval
+        else:
+            raise ValueError("Unsupported URL type: %s" % url_arg)
+
         # Set up the environment and grab the fic.
-        scraper = Scraper.get(opts.scraper or url_arg)()
+        scraper_cls = Scraper.get(opts.scraper or url_arg)
+        if not scraper_cls:
+            log.critical("Could not find scraper for URL: %s", url_arg)
+            sys.exit(1)
+
+        scraper = scraper_cls(retriever=retriever)
         writer = BaseWriter.get(opts.writer)()
+
         try:
-            story = scraper.download_fic(url_arg)
-        except Exception, err:
+            story = scraper.download_fic(url_arg, base_url=opts.scraper)
+        except Exception:
             log.error("Failed to retrieve story %s", url_arg)
             log.critical("TODO: Handle retrieval failures properly")
             raise
