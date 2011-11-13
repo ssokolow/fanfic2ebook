@@ -208,6 +208,18 @@ class FFNetScraper(Scraper):
         return [self.story_title_re.match(str(self._title_xp(dom)[0])).group('category')]
 FFNetScraper.register()
 
+class WGotFFNetScraper(FFNetScraper):
+    """@todo: Figure out a way to more properly match downloaded files."""
+    name             = "Fanfiction.net (wget-retrieved files)"
+    story_url_re     = re.compile(r".*\.\d+\.html")
+
+    def resolve_chapter_url(self, instr, base_url, dom):
+        """Generate a Fanfiction.net chapter URL from the chapter number."""
+        split_path = base_url.rsplit('.', 2)
+        split_path[1] = ('%0' + str(len(split_path[1])) + 'd') % int(instr)
+        return '.'.join(split_path)
+WGotFFNetScraper.register()
+
 class TtHScraper(Scraper):
     """A fanfic-to-ebook scraper for Twisting the Hellmouth"""
     name             = "Twisting the Hellmouth"
