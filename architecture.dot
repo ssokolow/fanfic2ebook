@@ -7,13 +7,18 @@ digraph G {
 
     subgraph cluster_sources {
         style=invisible;
-        db [label="Database"];
-        internet [label="Internet"];
         hdd [label="HDD"];
+        internet [label="Internet"];
+        db [label="Database"];
     }
 
-    retrieval [label="Retrieval and Caching"];
-    parsing [label="Metadata Extraction\nand Sanitization"];
+    subgraph cluster_spidering {
+        style=invisible;
+        /* TODO: Each of these should be its own rank. */
+        cache [label="Caching"];
+        retrieval [label="Retrieval"];
+        parsing [label="Metadata Extraction\nand Sanitization"];
+    }
 
     subgraph cluster_serialization {
         label = "Serialization";
@@ -32,8 +37,9 @@ digraph G {
     output [label="Output",style=rounded];
 
     internet -> retrieval;
+    db -> cache [dir=both];
     hdd -> retrieval [dir=both];
-    db -> retrieval [dir=both];
+    cache -> retrieval;
     retrieval -> parsing [dir=both,label="Spidering"];
     parsing -> hdd [style=dashed];
     parsing -> db [style=dashed];
@@ -41,5 +47,5 @@ digraph G {
     ser_html -> conv_lrf;
     conv_lrf -> output;
 
-    label="fanfic2ebook: Information Flow";
+    label="fanfic2ebook: Information Flow\nTODO: Migrate to something which will let me set ranks explicitly.";
 }
