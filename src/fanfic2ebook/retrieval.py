@@ -18,6 +18,8 @@ import os, sqlite3, time, urlparse
 # lxml imports
 from lxml import html
 
+#{ Cache
+
 OFFLINE_STORE_SCHEMA = """
 PRAGMA foreign_keys=ON;
 
@@ -41,15 +43,55 @@ def get_cache_root():
         croot = os.environ.get("XDG_CACHE_HOME", os.path.expanduser("~/.cache"))
     return croot
 
-class HTTP(object):
-    """Simple wrapper which tries to use httplib2 for chapter retrieval
-    and falls back to urllib2.
-    """
-    base_UA = 'Python HTTP cache wrapper'
+#TODO: Add a temporary cache so I can offer up a new .EXE for general use.
+class PermanentCache(object):
+    def __init__(self, db_path=None, table_prefix=''):
+        self.table_prefix = table_prefix
+        self.cache_root = get_cache_root()
 
-    @classmethod
-    def set_base_UA(cls, UA_string):
-        cls.base_UA = UA_string
+        self.db_conn = sqlite3.connect(db_path or
+                os.path.join(self.cache_root, 'http_permanent.sqlite3'))
+        self.db_conn.executescript(OFFLINE_STORE_SCHEMA % {'prefix': table_prefix})
+
+    def get(self, url):
+        row = self.db_conn.execute("SELECT contents FROM %surl_cache WHERE url = ?"
+                % self.table_prefix, [url]).fetchone()
+
+        if row:
+            log.debug("Found URL in cache database: %s", url)
+            return html.fromstring(row[0], base_url=url)
+        else:
+            return None
+
+    def add(self, url, timestamp, contents):
+        """
+        @type contents: C{unicode}
+
+        @bug: This is vulnerable to race conditions with multiple cache users.
+                 Need INSERT OR UPDATE-like at least.
+        """
+        self.db_conn.execute("INSERT INTO %surl_cache (url, timestamp, contents) VALUES (?, ?, ?)"
+                % self.table_prefix, [url, time.time(), contents])
+        self.db_conn.commit()
+
+    def expire(self, url):
+        """Flush a page from the retriever's permanent cache.
+        @todo: Try to think of a way to make this less necessary given that
+               Fanfiction.net returns soft 404 errors for nonexistant pages.
+               ( https://secure.wikimedia.org/wikipedia/en/wiki/HTTP_404 )
+        """
+        self.db_conn.execute("DELETE FROM %surl_cache WHERE url = ?", [url])
+
+#{ Retrievers
+
+class BaseRetrieval(object):
+    def __init__(self, cache=PermanentCache):
+        #XXX: Is there a less kludgy way to avoid class composition hell at the
+        #     top level of the loosely-coupled stack?
+        if isinstance(cache, type):
+            self.cache = cache()
+        else:
+            self.cache = cache
 
     @staticmethod
     def urlprep(url):
@@ -62,14 +104,47 @@ class HTTP(object):
             scheme='file',
             allow_fragments=False))
 
-    def __init__(self, db_path=None, table_prefix=''):
+    def get_dom(self, url, base_url=None):
+        raise NotImplementedError("BaseRetrieval is abstract")
+
+class LocalRetrieval(BaseRetrieval):
+    def get_dom(self, url, base_url=None):
+        """Retrieve the given URL from the network or the cache if available.
+
+        @todo: Figure out how to return a consistent object API so this can
+               doesn't have to return a pre-parsed DOM.
+        """
+        if url.lower().startswith('file://'):
+            url = self.urlprep(url)
+        else:
+            url = os.path.normcase(os.path.normpath(url))
+
+        dom = self.cache.get(base_url)
+        if dom is None:
+            dom = self.cache.get(url)
+        if dom is None:
+            log.debug("Opening file: %s", url)
+            dom = html.parse(open(url)).getroot()
+            self.cache.add(url, time.time(), html.tostring(dom, encoding=unicode))
+        return dom
+
+class HTTP(BaseRetrieval):
+    """Simple wrapper which tries to use httplib2 for chapter retrieval
+    and falls back to urllib2.
+    """
+    base_UA = 'Python HTTP cache wrapper'
+
+    @classmethod
+    def set_base_UA(cls, UA_string):
+        cls.base_UA = UA_string
+
+    def __init__(self, cache=PermanentCache):
         """
         @todo: Decide how to reconcile the httplib2 cache and the DB cache.
                (Or whether they serve purposes different enough to stay
                separate.)
         """
-        self.table_prefix = table_prefix
-        self.cache_root = get_cache_root()
+        super(HTTP, self).__init__(cache)
 
         try:
             import httplib2
@@ -85,49 +160,33 @@ class HTTP(object):
             urllib2.install_opener(self.opener)
             self.with_httplib2 = False
 
-        self.db_conn = sqlite3.connect(db_path or
-                os.path.join(self.cache_root, 'http_permanent.sqlite3'))
-        self.db_conn.executescript(OFFLINE_STORE_SCHEMA % {'prefix': table_prefix})
-
-    def expire(self, url):
-        """Flush a page from the retriever's permanent cache.
-        @todo: Try to think of a way to make this less necessary given that
-               Fanfiction.net returns soft 404 errors for nonexistant pages.
-               ( https://secure.wikimedia.org/wikipedia/en/wiki/HTTP_404 )
-        """
-        self.db_conn.execute("DELETE FROM %surl_cache WHERE url = ?", [url])
-
-    def get_dom(self, url):
+    def get_dom(self, url, base_url=None):
         """Retrieve the given URL from the network or the cache if available.
+
+        @param base_url: If provided, the cache will be checked under this URL
+            as well as the one provided in C{url}.
 
         @todo: Figure out how to return a consistent object API so this can
                doesn't have to return a pre-parsed DOM.
         """
-        row = self.db_conn.execute("SELECT contents FROM %surl_cache WHERE url = ?"
-                % self.table_prefix, [url]).fetchone()
+        dom = self.cache.get(base_url) or self.cache.get(url) or None
+        if not dom:
+            if self.with_httplib2:
+                log.debug("Retrieving URL using httplib2: %s", url)
+                resp, content = self.http.request(url, "GET",
+                        headers={"User-agent": self.full_UA})
 
-        if row:
-            log.debug("Found URL in cache database: %s", url)
-            return html.fromstring(row[0], base_url=url)
+                # Don't let errors reach the DB cache.
+                if resp['status'] != '200':
+                    #TODO: Proper exception.
+                    raise Exception("Error %s while attempting to retrieve URL: %s" % (resp['status'], url))
 
-        if self.with_httplib2:
-            log.debug("Retrieving URL using httplib2: %s", url)
-            resp, content = self.http.request(url, "GET",
-                    headers={"User-agent": self.full_UA})
+                dom = html.fromstring(content, base_url=url)
+            else:
+                log.debug("Retrieving URL using urllib2: %s", url)
+                dom = html.parse(self.opener.open(url)).getroot()
 
-            # Don't let errors reach the DB cache.
-            if resp['status'] != '200':
-                #TODO: Proper exception.
-                raise Exception("Error %s while attempting to retrieve URL: %s" % (resp['status'], url))
-
-            dom = html.fromstring(content, base_url=url)
-        else:
-            log.debug("Retrieving URL using urllib2: %s", url)
-            dom = html.parse(self.opener.open(url)).getroot()
-
-        self.db_conn.execute("INSERT INTO %surl_cache (url, timestamp, contents) VALUES (?, ?, ?)"
-                % self.table_prefix, [url, time.time(), html.tostring(dom, encoding=unicode)])
-        self.db_conn.commit()
+            self.cache.set(url, time.time(), html.tostring(dom, encoding=unicode))
         return dom
 
 #TODO: Hook in a cURL-like command-line UI that's at least useful for priming the cache.
@@ -153,9 +212,10 @@ if __name__ == '__main__':
     logging.basicConfig(level=log_levels[opts.verbose],
                         format='%(levelname)s: %(message)s')
 
-    http = HTTP()
+    cache = PermanentCache()
+    http = HTTP(cache=cache)
     for url in args:
         if opts.expire:
-            http.expire(url)
+            cache.expire(url)
         else:
             print html.tostring(http.get_dom(url))
