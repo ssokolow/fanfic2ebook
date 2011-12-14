@@ -1,4 +1,5 @@
 #!/usr/bin/env python
+# -*- coding: utf-8 -*-
 """
 @todo: Set up automatic UPXing of extension DLLs via this recipe: http://www.py2exe.org/index.cgi/BetterCompression
 @todo: Look for more modules I can exclude because they're never used: (See http://www.py2exe.org/index.cgi/FAQ)
@@ -8,7 +9,12 @@
 @todo: Decide on a version scheme py2exe is OK with (http://docs.python.org/distutils/setupscript.html#additional-meta-data)
 """
 import os, subprocess, sys
-from distutils.core import setup
+
+try:
+    from setuptools import setup
+    setup # Keep Pyflakes from complaining about redefinition of an "unused".
+except ImportError:
+    from distutils.core import setup
 from distutils import log
 
 def advzip(paths, description=None):
@@ -54,6 +60,7 @@ def upx(paths, description=None):
 commands = {}
 try:
     import py2exe
+    py2exe # (PyFlakes-silencing) TODO: Does the line below imply the side-effects triggered by the line above?
     from py2exe.build_exe import py2exe
     
     class CompactingPy2exe(py2exe):
@@ -131,7 +138,12 @@ except ImportError:
     pass
 
 sys.path.insert(0, 'src')
-from fanfic2ebook import __version__
+try:
+    from fanfic2ebook import __version__
+    __version__ # Silence PyFlakes
+except:
+    __version__ = None
+
 
 setup(name='fanfic2ebook',
     version=__version__,
@@ -156,7 +168,16 @@ setup(name='fanfic2ebook',
     packages = ['fanfic2ebook'],
     package_dir = {'': 'src'},
     cmdclass = commands,
-    
+
+    install_requires=[
+        "lxml",
+        "httplib2", #TODO: Decide how to handle this since it's technically optional.
+        # ...and calibré if you want conversion.
+        #
+        # TODO: Look into conditionally including "EasyDialogs for Windows".
+        # (Also, keep in mind the existence of "easydialogs-gtk")
+    ],
+
     windows=['src/fanfic2html'],
     options={
         'py2exe':
