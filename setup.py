@@ -18,13 +18,13 @@ except ImportError:
 from distutils import log
 
 def advzip(paths, description=None):
-    """Wrapper for AdvanceCOMP's advzip.exe.    
-    
+    """Wrapper for AdvanceCOMP's advzip.exe.
+
     Assumes it will either be in the PATH or the current directory.
     """
     cmd = ['advzip', '-z4']
     desc = description or os.path.basename(paths)
-    
+
     if isinstance(paths, basestring):
         paths = [paths]
 
@@ -39,12 +39,12 @@ def advzip(paths, description=None):
 
 def upx(paths, description=None):
     """Wrapper for upx.exe.
-    
+
     Assumes it will either be in the PATH or the current directory.
     """
     cmd = ['upx', '--best']
     desc = description or os.path.basename(paths)
-    
+
     if isinstance(paths, basestring):
         paths = [paths]
 
@@ -54,7 +54,7 @@ def upx(paths, description=None):
         subprocess.call(cmd)
     except Exception, err:
         log.warn("WARNING: Failed to UPX-pack %s\n\t%s\n"
-            "Did you put a copy of upx.exe next to your setup.py?\n", 
+            "Did you put a copy of upx.exe next to your setup.py?\n",
             desc, err)
 
 commands = {}
@@ -62,22 +62,22 @@ try:
     import py2exe
     py2exe # (PyFlakes-silencing) TODO: Does the line below imply the side-effects triggered by the line above?
     from py2exe.build_exe import py2exe
-    
+
     class CompactingPy2exe(py2exe):
         """Extend py2exe to support various additional
         ways for compressing the output of the process.
-        
+
         New py2exe options:
         - upx_internals:
           - If set to 1, UPX-pack python??.dll.
-          - If set to 2, also UPX all compiled modules. 
+          - If set to 2, also UPX all compiled modules.
             (Currently broken on Py27)
         - upx_results: If True, UPX resulting EXEs.
         - recompress_zip: If True, pass library.zip through AdvanceCOMP
-        
+
         upx_internals parts borrowed from
         http://www.py2exe.org/index.cgi/BetterCompression
-        
+
         @todo: Figure out why UPX compression of .pyd files causes crashes.
         @todo: Figure out why this suddenly is only getting called for DLLS
                and PYDs with a result of copied=0.
@@ -109,7 +109,7 @@ try:
                     self.windows_exe_files +
                     self.service_exe_files,
                     'output files')
-    
+
         def make_lib_archive(self, *args, **kwargs):
             zip_filename = py2exe.make_lib_archive(self, *args, **kwargs)
             try:
@@ -121,7 +121,7 @@ try:
         def patch_python_dll_winver(self, dll_name, new_winver=None):
             # Override this to first check if the file is upx'd and skip if so
             if not self.dry_run:
-                if not subprocess.call(['upx', '-qt', dll_name], 
+                if not subprocess.call(['upx', '-qt', dll_name],
                                        stdout=open(os.devnull, 'w')):
                     if self.verbose:
                         log.info("Skipping setting sys.winver for '%s' (UPX'd)",
@@ -132,7 +132,7 @@ try:
                     # the version adjustment can be successful
                     if self.upx_internals >= 1:
                         upx(dll_name)
-                        
+
     commands['py2exe'] = CompactingPy2exe
 except ImportError:
     pass
