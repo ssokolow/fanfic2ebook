@@ -1,0 +1,5 @@
+Q: How do I convert a Fanfiction.net-hosted story I downloaded using wget.
+A: Make sure the filename is in Whatever.01.html format and it *should* just work. WGotFFNetScraper is rarely tested, though, so it may or may not work.
+
+Q: What about a story I downloaded using a tool like HTTrack which preserves paths?
+A: That's a highly-experimental feature and there's no guarantee it'll work with a specific site scraper's method of locating and grabbing the other chapters, but you can try the --scraper=TheOriginalURL option.
