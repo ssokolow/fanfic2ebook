@@ -147,7 +147,7 @@ class HTMLDirWriter(BaseHTMLWriter):
 
         for num in story.chapters:
             #TODO: Ponder zero-padding the name here.
-            target = os.path.join(path, "%s - %s.html" % (
+            target = os.path.join(path, u"%s - %s.html" % (
                          self.prepare_filename(story.title),
                          num))
 

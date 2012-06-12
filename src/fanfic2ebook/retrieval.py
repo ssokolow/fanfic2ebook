@@ -60,6 +60,9 @@ class PermanentCache(object):
         if row:
             log.debug("Found URL in cache database: %s", url)
             return html.fromstring(row[0], base_url=url)
+            #FIXME: I need to either store or detect encodings in a way that
+            # will cause LXML's XPath engine to either output unicode() or a
+            # predictable encoding.
         else:
             return None
 

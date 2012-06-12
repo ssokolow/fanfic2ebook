@@ -59,7 +59,7 @@ class Scraper(BaseScraper):
         self.http = retriever()
 
     def _first_str(self, dom, selectors):
-        """Take a selector or selector chain and return a stripped string."""
+        """Take a selector or selector chain and return a stripped unicode()."""
         if not isinstance(selectors, (list, tuple)):
             selectors = [selectors]
 
@@ -76,7 +76,7 @@ class Scraper(BaseScraper):
 
         #TODO: Decide on a consistent plan for how to handle chained selectors
         #      (return types, conversion to str(), etc.)
-        return str(dom.strip())
+        return unicode(dom.strip())
 
     def acquire_chapter(self, url, story=None, base_url=None):
         """Download and scrape a single chapter from a story.
@@ -202,13 +202,13 @@ class FFNetScraper(Scraper):
     #TODO: Replace this with a selector chain
     def story_title_selector(self, dom):
         """Extract the story title from the Fanfiction.net <title> element."""
-        return [self.story_title_re.match(str(self._title_xp(dom)[0])).group('title')]
+        return [self.story_title_re.match(self._title_xp(dom)[0]).group('title')]
 
     #TODO: Replace this with a selector chain
     def get_story_categories(self, dom):
         """Retrieve the category into which the story falls."""
         #TODO: Handle crossovers properly
-        return [self.story_title_re.match(str(self._title_xp(dom)[0])).group('category')]
+        return [self.story_title_re.match(unicode(self._title_xp(dom)[0])).group('category')]
 FFNetScraper.register()
 
 class WGotFFNetScraper(FFNetScraper):
