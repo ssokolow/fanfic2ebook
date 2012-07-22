@@ -190,7 +190,7 @@ class FFNetScraper(Scraper):
     unwanted_elements        = [CSS('.a2a_kit')]
     _title_xp                = XPath('.//title/text()')
     story_title_re           = re.compile(r"^(?P<title>.+?)(?:,? Chapter "
-        "(?P<chapter>\d+?))(?:: (?P<chapter_title>.*?))?(?:, an? "
+        "(?P<chapter>\d+?))(?::? (?P<chapter_title>.*?))?(?:, an? "
         "(?P<category>.+?)(?: crossover)? fanfic [-|] FanFiction(?:\.Net)?)?$",
         re.IGNORECASE ) #: Used to extract the story's title and fandom from <title>
 
