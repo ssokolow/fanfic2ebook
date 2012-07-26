@@ -189,9 +189,10 @@ class FFNetScraper(Scraper):
     chapter_title_selector   = XPath(".//*[@name='chapter']//option[@selected]/text()")
     unwanted_elements        = [CSS('.a2a_kit')]
     _title_xp                = XPath('.//title/text()')
-    story_title_re           = re.compile(r"^(?P<title>.+?)(?:,? Chapter "
-        "(?P<chapter>\d+?))(?::? (?P<chapter_title>.*?))?(?:, an? "
-        "(?P<category>.+?)(?: crossover)? fanfic [-|] FanFiction(?:\.Net)?)?$",
+    story_title_re           = re.compile(r"^(?P<title>.+?)(?:,?[ ]+Chapter"
+        "[ ]+(?P<chapter>\S+?))(?::?[ ]+(?P<chapter_title>.*?))?(?:,[ ]+an?"
+        "[ ]+(?P<category>.+?)(?: crossover)?[ ]+fanfic[ ]+[-|][ ]+FanFiction"
+        "(?:\.Net)?)?$",
         re.IGNORECASE ) #: Used to extract the story's title and fandom from <title>
 
     #TODO: Not always reliable. I need to try to prefer the embedded 'var' versions.
