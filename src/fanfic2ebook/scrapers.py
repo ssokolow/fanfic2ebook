@@ -187,31 +187,15 @@ class FFNetScraper(Scraper):
     chapter_content_selector = CSS('.storytext')
     chapter_nodes_selector   = XPath(".//*[@name='chapter']//option")
     chapter_title_selector   = XPath(".//*[@name='chapter']//option[@selected]/text()")
+    story_title_selector     = XPath(".//*[@id='gui_table1i']//tr[@class='alt2']//b/text()")
     unwanted_elements        = [CSS('.a2a_kit')]
-    _title_xp                = XPath('.//title/text()')
-    story_title_re           = re.compile(r"^(?P<title>.+?)(?:,?[ ]+Chapter"
-        "[ ]+(?P<chapter>\S+?))(?::?[ ]+(?P<chapter_title>.*?))?(?:,[ ]+an?"
-        "[ ]+(?P<category>.+?)(?: crossover)?[ ]+fanfic[ ]+[-|][ ]+FanFiction"
-        "(?:\.Net)?)?$",
-        re.IGNORECASE ) #: Used to extract the story's title and fandom from <title>
-
-    #TODO: Not always reliable. I need to try to prefer the embedded 'var' versions.
+    #TODO: Handle crossovers properly
+    get_story_categories     = XPath(".//*[@id='pre_story_links']//a[@class='xcontrast_txt'][last()]/text()")
 
     def resolve_chapter_url(self, instr, base_url, dom):
         """Generate a Fanfiction.net chapter URL from the chapter number."""
         fic_id = urlparse.urlparse(base_url).path.split('/', 4)[2]
         return "http://www.fanfiction.net/s/%s/%s/" % (fic_id, instr)
-
-    #TODO: Replace this with a selector chain
-    def story_title_selector(self, dom):
-        """Extract the story title from the Fanfiction.net <title> element."""
-        return [self.story_title_re.match(self._title_xp(dom)[0]).group('title')]
-
-    #TODO: Replace this with a selector chain
-    def get_story_categories(self, dom):
-        """Retrieve the category into which the story falls."""
-        #TODO: Handle crossovers properly
-        return [self.story_title_re.match(unicode(self._title_xp(dom)[0])).group('category')]
 FFNetScraper.register()
 
 class WGotFFNetScraper(FFNetScraper):
@@ -251,5 +235,4 @@ class FicWadScraper(Scraper):
     chapter_nodes_selector   = XPath(".//select[@name='goto']//option")
     chapter_title_selector   = XPath(".//select[@name='goto']//option[@selected]/text()")
     chapter_content_selector = CSS('#storytext')
-
 FicWadScraper.register()
