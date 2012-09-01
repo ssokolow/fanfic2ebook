@@ -58,7 +58,7 @@ class PermanentCache(object):
                 % self.table_prefix, [url]).fetchone()
 
         if row:
-            log.debug("Found URL in cache database: %s", url)
+            log.info("Found URL in permanent cache database: %s", url)
             return html.fromstring(row[0], base_url=url)
             #FIXME: I need to either store or detect encodings in a way that
             # will cause LXML's XPath engine to either output unicode() or a
@@ -126,7 +126,7 @@ class LocalRetrieval(BaseRetrieval):
         if dom is None:
             dom = self.cache.get(url)
         if dom is None:
-            log.debug("Opening file: %s", url)
+            log.info("Opening file: %s", url)
             dom = html.parse(open(url)).getroot()
             self.cache.add(url, time.time(), html.tostring(dom, encoding=unicode))
         return dom
@@ -179,7 +179,7 @@ class HTTP(BaseRetrieval):
 
         if dom is None:
             if self.with_httplib2:
-                log.debug("Retrieving URL using httplib2: %s", url)
+                log.info("Retrieving URL using httplib2: %s", url)
                 resp, content = self.http.request(url, "GET",
                         headers={"User-agent": self.full_UA})
 
@@ -190,7 +190,7 @@ class HTTP(BaseRetrieval):
 
                 dom = html.fromstring(content, base_url=url)
             else:
-                log.debug("Retrieving URL using urllib2: %s", url)
+                log.info("Retrieving URL using urllib2: %s", url)
                 dom = html.parse(self.opener.open(url)).getroot()
 
             self.cache.add(url, time.time(), html.tostring(dom, encoding=unicode))
