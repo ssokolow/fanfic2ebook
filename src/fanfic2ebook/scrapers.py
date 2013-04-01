@@ -2,16 +2,17 @@
 """Site scraper definitions
 
 @todo:
- - Add a summary-extraction method and have the default implementation look for a paragraph
-   beginning with "Summary: " or "Synopsis: ".
+ - Add a summary-extraction method and have the default implementation look for
+   a paragraph beginning with "Summary: " or "Synopsis: ".
  - Add --cover and --comment (summary) support to TtHScraper.
  - Figure out why the FicWad scraper errors out when it passes the chapter
    associated with the URL fed to it.
  - Write a Scraper subclass for MediaMiner.
- - Make this code more robust (it makes many assumptions about cached data and input)
+ - Make it more robust (it makes many assumptions about cached data and input)
  - Consider adding ETags and If-Modified-Since support to the urllib2 fallback.
  - Check out the sites listed at http://www.ficsavers.com/index.cgi?action=list
- - See if this is immediately relevant: http://lxml.de/xpathxslt.html#regular-expressions-in-xpath
+ - See if this is immediately relevant:
+   http://lxml.de/xpathxslt.html#regular-expressions-in-xpath
 """
 
 import logging
@@ -37,29 +38,31 @@ def regex_key_matcher(cls, url, fallback=None):
     return fallback
 
 class BaseScraper(Registerable):
-    story_url_re           = None #: This regex determines which scrapers get which files.
-    name                   = None #: Used by --list_supported.
+    story_url_re           = None  #: This regex picks which scraper for a file
+    name                   = None  #: Used by --list_supported.
 BaseScraper.init_registry(key_getter=lambda x: x.story_url_re,
         key_matcher=regex_key_matcher)
 
-#TODO: I need to write some unit tests for this which catch grabbing pages twice.
+#TODO: Write some unit tests for this which catch grabbing pages twice.
 class Scraper(BaseScraper):
     #TODO: Work to make these names as consistent as possible
-    author_name_selector     = None #: Used by L{acquire_chapter} to find the author's name.
-    story_title_selector     = None #: Used by L{acquire_chapter}
-    chapter_nodes_selector    = None #: Used by L{acquire_chapter} to find the chapter list.
+    author_name_selector     = None  #: Gets author name for L{acquire_chapter}
+    story_title_selector     = None  #: Used by L{acquire_chapter}
+    chapter_nodes_selector    = None  #: Chapter list for L{acquire_chapter}
     chapter_title_selector   = None
-    chapter_content_selector = None #: Used by L{acquire_chapter} to find the chapter content.
-    not_chapters             = ["story index", "table of contents"] #: Must be lowercase.
-    unwanted_elements        = []   #: Set to a list of CSS or XPath selectors to remove things.
+    chapter_content_selector = None  #: Chapter content for L{acquire_chapter}
+    not_chapters             = ["story index", "table of contents"]  #: Must be lowercase.
+    unwanted_elements        = []   #: CSS or XPath selectors to remove things.
 
-    chapter_title_re       = re.compile(r"^(?P<num>\d+)\. (?P<name>.*)$"
-        ) #: Common to Fanfiction.net, FicWad, and TtH <select> elements.
+    chapter_title_re       = re.compile(
+            r"^(?P<num>\d+)\. (?P<name>.*)$"
+    )  #: Common to Fanfiction.net, FicWad, and TtH <select> elements.
+
     def __init__(self, retriever=HTTP):
         self.http = retriever()
 
     def _first_str(self, dom, selectors):
-        """Take a selector or selector chain and return a stripped unicode()."""
+        """Take a selector or selector chain and return a stripped unicode()"""
         if not isinstance(selectors, (list, tuple)):
             selectors = [selectors]
 
@@ -98,7 +101,7 @@ class Scraper(BaseScraper):
             log.error("Not a %s story URL: %s", self.name, url)
             return None
 
-        # Retrieve the raw chapter (don't keep the un-parsed HTML wasting memory)
+        # Retrieve the raw chapter (don't keep un-parsed HTML wasting memory)
         # .parse(handle) for proper encoding detection.
         # .urlopen for customizing the User-Agent header.
         dom = self.http.get_dom(url)
@@ -113,8 +116,8 @@ class Scraper(BaseScraper):
             #      failure should be checked (given that different apps may
             #      have different standards) and how to react to it.
             story = Story(
-                    title  = self._first_str(dom, self.story_title_selector),
-                    author = self._first_str(dom, self.author_name_selector))
+                    title=self._first_str(dom, self.story_title_selector),
+                    author=self._first_str(dom, self.author_name_selector))
             story.publisher = self.name
             story.categories  = self.get_story_categories(dom)
             if len(chapter_nodes):
@@ -171,9 +174,11 @@ class Scraper(BaseScraper):
         """Override this if the values of the chapter <option>s are neither
            relative nor absolute URLs."""
         return urlparse.urljoin(base_url, instr)
+
     def get_story_categories(self, dom):
-        """(optional) Override to implement scraping of categories/fandoms/etc."""
+        """(optional) Override to scrape categories/fandoms/etc."""
         return ''
+
     def custom_content_cleaning(self, content):
         """Override to implement site-specific clean-up of chapter content"""
         return content
