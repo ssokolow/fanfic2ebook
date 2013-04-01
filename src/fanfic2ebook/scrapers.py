@@ -192,7 +192,7 @@ class FFNetScraper(Scraper):
     chapter_content_selector = CSS('.storytext')
     chapter_nodes_selector   = XPath(".//*[@name='chapter']//option")
     chapter_title_selector   = XPath(".//*[@name='chapter']//option[@selected]/text()")
-    story_title_selector     = XPath(".//*[@id='gui_table1i']//tr//b/text()")
+    story_title_selector     = XPath(".//table//tr//b/text()")
     unwanted_elements        = [CSS('.a2a_kit')]
     #TODO: Handle crossovers properly
     get_story_categories     = XPath(".//*[@id='pre_story_links']//a[@class='xcontrast_txt'][last()]/text()")
