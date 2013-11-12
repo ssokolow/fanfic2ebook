@@ -186,7 +186,7 @@ class HTTP(BaseRetrieval):
                         headers={"User-agent": self.full_UA})
 
                 # Don't let errors reach the DB cache.
-                if resp['status'] != '200':
+                if resp['status'] not in ('200', '304'):
                     #TODO: Proper exception.
                     raise Exception("Error %s while attempting to retrieve URL: %s" % (resp['status'], url))
 
