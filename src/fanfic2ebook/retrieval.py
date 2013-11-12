@@ -4,6 +4,8 @@
 
 @todo: Consider adding ETags and If-Modified-Since support to the urllib2 fallback.
 @todo: Decide where responsibility for VACUUMing should lie.
+@todo: If a higher level fails, it should automatically invalidate the cached copy in case it was a
+       transient server-side error.
 """
 
 __author__  = "Stephan Sokolow (deitarion/SSokolow)"
