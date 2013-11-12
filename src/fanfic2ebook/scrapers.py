@@ -13,6 +13,10 @@
  - Check out the sites listed at http://www.ficsavers.com/index.cgi?action=list
  - See if this is immediately relevant:
    http://lxml.de/xpathxslt.html#regular-expressions-in-xpath
+ - Consider supporting some kind of learning behaviour to produce a draft
+   version of the new XPath expression when FFnet changes their layout.
+   (Based on identifying what it SHOULD return from metadata cached from
+   previous chapters and then figuring out how to retrieve that from the DOM.)
 """
 
 import logging
@@ -192,7 +196,7 @@ class FFNetScraper(Scraper):
     chapter_content_selector = CSS('.storytext')
     chapter_nodes_selector   = XPath(".//*[@name='chapter']//option")
     chapter_title_selector   = XPath(".//*[@name='chapter']//option[@selected]/text()")
-    story_title_selector     = XPath(".//table//tr//b/text()")
+    story_title_selector     = XPath(".//div[@id='content_wrapper_inner']/b/text()")
     unwanted_elements        = [CSS('.a2a_kit')]
     #TODO: Handle crossovers properly
     get_story_categories     = XPath(".//*[@id='pre_story_links']//a[@class='xcontrast_txt'][last()]/text()")
