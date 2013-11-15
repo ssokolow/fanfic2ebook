@@ -190,7 +190,7 @@ class Scraper(BaseScraper):
 class FFNetScraper(Scraper):
     """A fanfic-to-ebook scraper for Fanfiction.net"""
     name             = "Fanfiction.net"
-    story_url_re     = re.compile(r"http://www.fanfiction.net/s/\d+/\d+/.*")
+    story_url_re     = re.compile(r"https?://www.fanfiction.net/s/\d+/\d+/.*")
 
     author_name_selector     = XPath(".//a[contains(@href, '/u/')]/text()")
     chapter_content_selector = CSS('.storytext')
